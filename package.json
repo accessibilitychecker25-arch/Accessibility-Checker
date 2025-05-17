@@ -6,7 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "scripts": {
+      "prettier": "prettier --write 'src/**/*.{ts,html,css}'"
+    }
   },
   "private": true,
   "dependencies": {
@@ -38,6 +41,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.5.3",
+    "prettier": "^3.5.3",
     "tailwindcss": "^4.1.7",
     "typescript": "~5.7.2"
   }

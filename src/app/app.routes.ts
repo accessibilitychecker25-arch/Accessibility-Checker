@@ -8,8 +8,6 @@ export const appRoutes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
-    children: [
-      { path: 'dashboard', component: DashboardComponent },
-    ]
+    children: [{ path: 'dashboard', component: DashboardComponent }],
   },
 ];
