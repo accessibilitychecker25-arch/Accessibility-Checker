@@ -13,7 +13,7 @@ export class MainLayoutComponent {
     private router: Router,
   ) {}
 
-   isDarkMode = false;
+  isDarkMode = false;
 
   toggleDarkMode(): void {
     this.isDarkMode = !this.isDarkMode;
@@ -44,4 +44,3 @@ export class MainLayoutComponent {
     });
   }
 }
-

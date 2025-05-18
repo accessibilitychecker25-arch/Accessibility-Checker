@@ -1,25 +1,21 @@
 import { Component } from '@angular/core';
-import { ScreenshotUploadComponent } from '../screenshot-upload/screenshot-upload.component';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { CommonModule } from '@angular/common';
+import { AssignmentDialogComponent } from '../assignment-dialog/assignment-dialog.component';
+import { AssignmentService } from '../services/assignment.service';
+import { Assignment } from '../models/assignment.model';
 
 @Component({
   selector: 'app-parent',
   templateUrl: './assignments.component.html',
-  imports: [
-    CommonModule,
-    DialogModule,
-    ButtonModule,
-    ScreenshotUploadComponent,
-  ],
+  imports: [AssignmentDialogComponent],
   standalone: true,
 })
 export class AssignmentsComponent {
-  showDialog = false;
-  scannedText: string = '';
+  constructor(private assignmentService: AssignmentService) {}
 
-  handleScannedText(text: string) {
-    this.scannedText = text;
+  saveAssignment(data: Assignment) {
+    this.assignmentService
+      .addAssignment(data)
+      .then(() => console.log('Assignment saved'))
+      .catch((err) => console.error('Error saving:', err));
   }
 }

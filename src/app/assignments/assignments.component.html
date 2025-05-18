@@ -1,36 +1,13 @@
+<!-- Dialog Component -->
+<app-assignment-dialog
+  #assignmentDialog
+  (submitted)="saveAssignment($event)"
+></app-assignment-dialog>
+
+<!-- Trigger Button -->
 <button
-  pButton
-  type="button"
-  label="Setup Assignment"
-  (click)="showDialog = true"
-></button>
-
-<p-dialog
-  header="Upload Assignment Screenshot"
-  [(visible)]="showDialog"
-  [modal]="true"
-  [closable]="true"
-  [style]="{ width: '32rem' }"
-  [contentStyle]="{ padding: '1.5rem' }"
-  [breakpoints]="{ '960px': '75vw', '640px': '90vw' }"
-  [styleClass]="'bg-white dark:bg-surface text-black dark:text-white rounded-xl shadow-xl border border-blue-600'"
+  class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+  (click)="assignmentDialog.open()"
 >
-
-
-  <app-screenshot-upload
-    (scannedText)="handleScannedText($event)"
-  ></app-screenshot-upload>
-
-  <div class="flex justify-end gap-2 mt-4">
-    <p-button
-      label="Cancel"
-      severity="secondary"
-      (click)="showDialog = false"
-    ></p-button>
-  </div>
-
-  <div *ngIf="scannedText">
-    <h4>Scanned Text:</h4>
-    <pre>{{ scannedText }}</pre>
-  </div>
-</p-dialog>
+  Setup Assignment
+</button>

@@ -1,4 +1,10 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import { createWorker } from 'tesseract.js';
 import { CommonModule } from '@angular/common';
 
@@ -10,40 +16,54 @@ import { CommonModule } from '@angular/common';
 })
 export class ScreenshotUploadComponent {
   @Output() scannedText = new EventEmitter<string>();
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   loading = false;
   error: string | null = null;
+  private imgURL: string | null = null;
 
   onScreenshotSelected(event: Event) {
     this.error = null;
     this.loading = true;
     const file = (event.target as HTMLInputElement).files?.[0];
+
     if (!file) {
       this.loading = false;
       return;
     }
 
-    const imgURL = URL.createObjectURL(file);
+    this.imgURL = URL.createObjectURL(file);
 
     createWorker('eng')
-      .then((worker) => {
-        return worker
-          .recognize(imgURL)
-          .then((result) => {
-            this.scannedText.emit(result.data.text.trim());
-            return worker.terminate();
-          })
-          .catch(() => {
-            this.error = 'Failed to extract text.';
-          })
-          .finally(() => {
-            this.loading = false;
-            URL.revokeObjectURL(imgURL);
-          });
-      })
+      .then((worker) =>
+        worker.recognize(this.imgURL!).then((result) => {
+          this.scannedText.emit(result.data.text.trim());
+          return worker.terminate();
+        }),
+      )
       .catch(() => {
-        this.error = 'Failed to initialize OCR.';
+        this.error = 'Failed to extract text.';
+      })
+      .finally(() => {
         this.loading = false;
-        URL.revokeObjectURL(imgURL);
+        if (this.imgURL) {
+          URL.revokeObjectURL(this.imgURL);
+        }
       });
+  }
+
+  reset() {
+    this.error = null;
+    this.loading = false;
+    if (this.imgURL) {
+      URL.revokeObjectURL(this.imgURL);
+      this.imgURL = null;
+    }
+    this.scannedText.emit('');
+
+    // ✅ This resets the file input display (shows "No file chosen")
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+    }
   }
 }

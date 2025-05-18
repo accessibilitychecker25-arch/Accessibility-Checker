@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { appRoutes } from './app/app.routes';
 
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideAnimations } from '@angular/platform-browser/animations';
 
@@ -22,6 +23,7 @@ bootstrapApplication(AppComponent, {
     provideAnimations(),
     provideRouter(appRoutes),
     provideFirebaseApp(() => initializeApp(firebaseConfig)),
+    provideFirestore(() => getFirestore()),
     provideAuth(() => getAuth()),
   ],
 });
