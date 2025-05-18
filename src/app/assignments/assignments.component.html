@@ -10,12 +10,13 @@
   [(visible)]="showDialog"
   [modal]="true"
   [closable]="true"
-  [style]="{
-    width: '25rem',
-    border: '2px solid #007ad9',
-    'border-radius': '8px',
-  }"
+  [style]="{ width: '32rem' }"
+  [contentStyle]="{ padding: '1.5rem' }"
+  [breakpoints]="{ '960px': '75vw', '640px': '90vw' }"
+  [styleClass]="'bg-white dark:bg-surface text-black dark:text-white rounded-xl shadow-xl border border-blue-600'"
 >
+
+
   <app-screenshot-upload
     (scannedText)="handleScannedText($event)"
   ></app-screenshot-upload>

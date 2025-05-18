@@ -13,9 +13,35 @@ export class MainLayoutComponent {
     private router: Router,
   ) {}
 
+   isDarkMode = false;
+
+  toggleDarkMode(): void {
+    this.isDarkMode = !this.isDarkMode;
+
+    if (this.isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  }
+
+  ngOnInit(): void {
+    const darkPref = localStorage.getItem('darkMode') === 'true';
+    this.isDarkMode = darkPref;
+
+    if (this.isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+
   logout() {
     signOut(this.auth).then(() => {
       this.router.navigate(['/']); // go back to login after logout
     });
   }
 }
+

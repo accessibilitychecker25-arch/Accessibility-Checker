@@ -8,5 +8,19 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.component.css',
 })
 export class AppComponent {
-  title = 'grade-checker';
+  toggleDarkMode() {
+    document.documentElement.classList.toggle('dark');
+
+    // Optional: Persist preference
+    const isDark = document.documentElement.classList.contains('dark');
+    localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+  }
+
+  ngOnInit() {
+    // Load saved preference
+    const darkPref = localStorage.getItem('darkMode') === 'true';
+    if (darkPref) {
+      document.documentElement.classList.add('dark');
+    }
+  }
 }
