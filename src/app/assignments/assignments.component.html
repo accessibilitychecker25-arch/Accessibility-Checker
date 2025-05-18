@@ -1,13 +1,51 @@
-<!-- Dialog Component -->
+<!-- Dialog -->
 <app-assignment-dialog
   #assignmentDialog
   (submitted)="saveAssignment($event)"
 ></app-assignment-dialog>
 
-<!-- Trigger Button -->
+<!-- Add Button -->
 <button
-  class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+  class="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
   (click)="assignmentDialog.open()"
 >
   Setup Assignment
 </button>
+
+<!-- Table -->
+<div class="overflow-x-auto">
+  <table
+    class="min-w-full bg-white dark:bg-surface text-sm text-left border border-gray-200 dark:border-gray-700"
+  >
+    <thead
+      class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 uppercase text-xs"
+    >
+      <tr>
+        <th class="px-4 py-2">Name</th>
+        <th class="px-4 py-2">Class</th>
+        <th class="px-4 py-2">Extracted Text</th>
+        <th class="px-4 py-2">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="let assignment of assignments"
+        class="border-b dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+      >
+        <td class="px-4 py-2">{{ assignment.name }}</td>
+        <td class="px-4 py-2">{{ assignment.class }}</td>
+        <td class="px-4 py-2 max-w-xs truncate">
+          {{ assignment.extractedText }}
+        </td>
+        <td class="px-4 py-2 space-x-2">
+          <button
+            class="text-red-500 hover:underline"
+            (click)="deleteAssignment(assignment.id!)"
+          >
+            Delete
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

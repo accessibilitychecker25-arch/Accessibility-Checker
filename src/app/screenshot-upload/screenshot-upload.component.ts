@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { createWorker } from 'tesseract.js';
 import { CommonModule } from '@angular/common';
+import { catchError, defer, finalize, from, of, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-screenshot-upload',
@@ -23,34 +24,46 @@ export class ScreenshotUploadComponent {
   private imgURL: string | null = null;
 
   onScreenshotSelected(event: Event) {
-    this.error = null;
-    this.loading = true;
-    const file = (event.target as HTMLInputElement).files?.[0];
+  this.error = null;
+  this.loading = true;
 
-    if (!file) {
-      this.loading = false;
-      return;
-    }
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) {
+    this.loading = false;
+    return;
+  }
 
-    this.imgURL = URL.createObjectURL(file);
+  this.imgURL = URL.createObjectURL(file);
 
-    createWorker('eng')
-      .then((worker) =>
-        worker.recognize(this.imgURL!).then((result) => {
-          this.scannedText.emit(result.data.text.trim());
-          return worker.terminate();
-        }),
-      )
-      .catch(() => {
-        this.error = 'Failed to extract text.';
-      })
-      .finally(() => {
+  defer(() => from(createWorker('eng')))
+    .pipe(
+      switchMap((worker) =>
+        from(worker.recognize(this.imgURL!)).pipe(
+          tap((result) => {
+            const text = result.data.text?.trim() || '';
+            this.scannedText.emit(text);
+          }),
+          switchMap(() => from(worker.terminate())),
+          catchError(() => {
+            this.error = 'Failed to extract text.';
+            return of(null);
+          })
+        )
+      ),
+      catchError(() => {
+        this.error = 'Failed to initialize OCR.';
+        return of(null);
+      }),
+      finalize(() => {
         this.loading = false;
         if (this.imgURL) {
           URL.revokeObjectURL(this.imgURL);
         }
-      });
-  }
+      })
+    )
+    .subscribe();
+}
+
 
   reset() {
     this.error = null;
