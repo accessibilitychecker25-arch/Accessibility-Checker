@@ -1,0 +1,5 @@
+<div>
+  <input type="file" accept="image/*" (change)="onScreenshotSelected($event)" />
+  <p *ngIf="loading">Scanning...</p>
+  <p *ngIf="error" class="text-red-500">{{ error }}</p>
+</div>

@@ -1,9 +1,18 @@
 import { Component } from '@angular/core';
+import { ScreenshotUploadComponent } from '../screenshot-upload/screenshot-upload.component';
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-assignments',
-  imports: [],
+  selector: 'app-parent',
   templateUrl: './assignments.component.html',
-  styleUrl: './assignments.component.css',
+  imports: [ScreenshotUploadComponent, CommonModule], 
 })
-export class AssignmentsComponent {}
+export class AssignmentsComponent {
+  showDialog = false;
+  scannedText: string = '';
+
+  handleScannedText(text: string) {
+    this.scannedText = text;
+    this.showDialog = false;
+  }
+}

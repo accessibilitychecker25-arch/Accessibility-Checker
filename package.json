@@ -23,6 +23,7 @@
     "firebase": "^11.7.3",
     "grade-checker": "file:",
     "rxjs": "~7.8.0",
+    "tesseract.js": "^6.0.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
