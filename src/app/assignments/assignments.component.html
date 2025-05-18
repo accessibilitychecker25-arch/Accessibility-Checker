@@ -1,22 +1,35 @@
-<!-- Button to trigger dialog -->
-<button (click)="showDialog = true"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-  Setup Assignment
-</button>
+<button
+  pButton
+  type="button"
+  label="Setup Assignment"
+  (click)="showDialog = true"
+></button>
 
-<!-- Custom Modal -->
-<div *ngIf="showDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-  <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
-    <button (click)="showDialog = false"
-            class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl font-bold">&times;</button>
-    <h2 class="text-xl font-semibold mb-4">Upload Screenshot</h2>
-    
-    <app-screenshot-upload (scannedText)="handleScannedText($event)"></app-screenshot-upload>
+<p-dialog
+  header="Upload Assignment Screenshot"
+  [(visible)]="showDialog"
+  [modal]="true"
+  [closable]="true"
+  [style]="{
+    width: '25rem',
+    border: '2px solid #007ad9',
+    'border-radius': '8px',
+  }"
+>
+  <app-screenshot-upload
+    (scannedText)="handleScannedText($event)"
+  ></app-screenshot-upload>
+
+  <div class="flex justify-end gap-2 mt-4">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      (click)="showDialog = false"
+    ></p-button>
   </div>
-</div>
 
-<!-- Display scanned text -->
-<div *ngIf="scannedText" class="mt-6 bg-gray-100 p-4 rounded">
-  <h3 class="font-bold">Scanned Text:</h3>
-  <pre class="whitespace-pre-wrap">{{ scannedText }}</pre>
-</div>
+  <div *ngIf="scannedText">
+    <h4>Scanned Text:</h4>
+    <pre>{{ scannedText }}</pre>
+  </div>
+</p-dialog>

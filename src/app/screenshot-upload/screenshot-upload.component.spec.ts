@@ -8,9 +8,8 @@ describe('ScreenshotUploadComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ScreenshotUploadComponent]
-    })
-    .compileComponents();
+      imports: [ScreenshotUploadComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ScreenshotUploadComponent);
     component = fixture.componentInstance;

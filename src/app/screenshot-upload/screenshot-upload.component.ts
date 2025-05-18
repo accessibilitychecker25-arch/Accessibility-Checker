@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-screenshot-upload',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './screenshot-upload.component.html'
+  templateUrl: './screenshot-upload.component.html',
 })
 export class ScreenshotUploadComponent {
   @Output() scannedText = new EventEmitter<string>();
@@ -24,23 +24,26 @@ export class ScreenshotUploadComponent {
 
     const imgURL = URL.createObjectURL(file);
 
-    createWorker('eng').then(worker => {
-      return worker.recognize(imgURL)
-        .then(result => {
-          this.scannedText.emit(result.data.text.trim());
-          return worker.terminate();
-        })
-        .catch(() => {
-          this.error = 'Failed to extract text.';
-        })
-        .finally(() => {
-          this.loading = false;
-          URL.revokeObjectURL(imgURL);
-        });
-    }).catch(() => {
-      this.error = 'Failed to initialize OCR.';
-      this.loading = false;
-      URL.revokeObjectURL(imgURL);
-    });
+    createWorker('eng')
+      .then((worker) => {
+        return worker
+          .recognize(imgURL)
+          .then((result) => {
+            this.scannedText.emit(result.data.text.trim());
+            return worker.terminate();
+          })
+          .catch(() => {
+            this.error = 'Failed to extract text.';
+          })
+          .finally(() => {
+            this.loading = false;
+            URL.revokeObjectURL(imgURL);
+          });
+      })
+      .catch(() => {
+        this.error = 'Failed to initialize OCR.';
+        this.loading = false;
+        URL.revokeObjectURL(imgURL);
+      });
   }
 }
