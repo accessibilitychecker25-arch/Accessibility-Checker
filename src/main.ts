@@ -9,13 +9,13 @@ import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideAnimations } from '@angular/platform-browser/animations';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyDzrENp3FsgzsuLeiuellDsnE4W8Vbe3Lw',
-  authDomain: 'grade-checker-5bd43.firebaseapp.com',
-  projectId: 'grade-checker-5bd43',
-  storageBucket: 'grade-checker-5bd43.appspot.com',
-  messagingSenderId: '397851820077',
-  appId: '1:397851820077:web:2e15d2150f809ed177b8a4',
-  measurementId: 'G-H08YNXRWF5',
+  apiKey: 'AIzaSyBhW7HnnVFVO-4XFaJLk8mR7ymbxWhkTH4',
+  authDomain: 'senior-design-accessibility.firebaseapp.com',
+  projectId: 'senior-design-accessibility',
+  storageBucket: 'senior-design-accessibility.firebasestorage.app',
+  messagingSenderId: '521462721828',
+  appId: '1:521462721828:web:2f4295b2658db5903b17b1',
+  measurementId: 'G-XE1DW7D98T',
 };
 
 bootstrapApplication(AppComponent, {

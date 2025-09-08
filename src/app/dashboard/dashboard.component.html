@@ -1,1 +1,35 @@
-<p>dashboard works!</p>
+<app-file-upload (submitted)="handleFile($event)"></app-file-upload>
+
+<!-- Progress bar -->
+<div class="mt-4 w-full max-w-md" *ngIf="isUploading">
+  <div class="text-sm text-gray-600 dark:text-gray-300 mb-1">
+    Uploading: {{ progress }}%
+  </div>
+  <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded">
+    <div
+      class="h-2 bg-blue-600 dark:bg-blue-500 rounded transition-all"
+      [style.width.%]="progress"
+    ></div>
+  </div>
+</div>
+
+<!-- Download button -->
+<div class="mt-6 w-full max-w-md" *ngIf="downloadUrl">
+  <div
+    class="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded"
+  >
+    <div>
+      <div class="text-sm text-gray-700 dark:text-gray-200">Report Ready:</div>
+      <div class="text-xs text-gray-500 dark:text-gray-400">
+        {{ downloadName }}
+      </div>
+    </div>
+    <a
+      [href]="downloadUrl"
+      [download]="downloadName"
+      class="text-sm px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition"
+    >
+      Download
+    </a>
+  </div>
+</div>

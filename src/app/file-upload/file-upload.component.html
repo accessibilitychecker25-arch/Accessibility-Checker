@@ -1,0 +1,26 @@
+<div class="flex items-center space-x-2">
+  <!-- Hidden native input -->
+  <input
+    type="file"
+    id="fileInput"
+    accept=".pdf,.doc,.docx,.ppt,.pptx"
+    (change)="onFileSelected($event)"
+    class="hidden"
+  />
+
+  <!-- Styled label that triggers input -->
+  <label
+    for="fileInput"
+    class="text-sm px-3 py-1 rounded bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 transition cursor-pointer"
+  >
+    {{ selectedFile ? selectedFile.name : "Choose File" }}
+  </label>
+
+  <!-- Your existing Upload button -->
+  <button
+    class="text-sm px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+    (click)="submit()"
+  >
+    Process
+  </button>
+</div>
