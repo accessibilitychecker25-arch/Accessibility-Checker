@@ -1,5 +1,6 @@
 
 import { Component } from '@angular/core';
+import { environment } from '../../environments/environment';
 import {
   HttpClient,
   HttpClientModule,
@@ -38,7 +39,7 @@ export class DashboardComponent {
     this.progress = 0;
 
     this.http
-      .post('http://localhost:3000/upload-pdf', formData, {
+      .post(environment.apiUrl, formData, {
         observe: 'events',
         reportProgress: true,
       })
