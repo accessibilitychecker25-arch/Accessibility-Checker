@@ -13,23 +13,45 @@
   </div>
 </div>
 
-<!-- Download button -->
-<div class="mt-6 w-full max-w-md" *ngIf="downloadUrl">
-  <div
-    class="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded"
-  >
-    <div>
-      <div class="text-sm text-gray-700 dark:text-gray-200">Report Ready:</div>
-      <div class="text-xs text-gray-500 dark:text-gray-400">
-        {{ downloadName }}
-      </div>
+<!-- JSON Results -->
+<div class="mt-6 w-full" *ngIf="reportResult">
+  <div class="w-full p-4 bg-gray-100 dark:bg-gray-800 rounded shadow">
+    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+      Accessibility Report ({{ reportResult.fileName }})
+    </h3>
+
+    <!-- Summary -->
+    <div class="text-sm text-gray-700 dark:text-gray-300 mb-4">
+      <p><strong>Sucess:</strong> {{ reportResult.summary.successCount }}</p>
+      <p><strong>Failed:</strong> {{ reportResult.summary.failedCount }}</p>
+      <p>
+        <strong>Needs manual check:</strong>
+        {{ reportResult.summary.manualCheckCount }}
+      </p>
     </div>
-    <a
-      [href]="downloadUrl"
-      [download]="downloadName"
-      class="text-sm px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition"
-    >
-      Download
-    </a>
+
+    <!-- Failures -->
+    <div *ngIf="reportResult.failures?.length">
+      <h4 class="font-medium text-red-600 mb-1">Failures</h4>
+      <ul
+        class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300"
+      >
+        <li *ngFor="let fail of reportResult.failures">
+          <strong>{{ fail.Rule }}</strong> - {{ fail.Description }}
+        </li>
+      </ul>
+    </div>
+
+    <!-- Manual Checks -->
+    <div *ngIf="reportResult.needsManualCheck?.length" class="mt-4">
+      <h4 class="font-medium text-yellow-600 mb-1">Needs Manual Check</h4>
+      <ul
+        class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300"
+      >
+        <li *ngFor="let item of reportResult.needsManualCheck">
+          <strong>{{ item.Rule }}</strong> - {{ item.Description }}
+        </li>
+      </ul>
+    </div>
   </div>
 </div>

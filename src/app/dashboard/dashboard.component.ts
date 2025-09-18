@@ -1,3 +1,4 @@
+
 import { Component } from '@angular/core';
 import {
   HttpClient,
@@ -17,10 +18,11 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent {
-  downloadUrl: string | null = null;
-  downloadName: string | null = null;
   isUploading = false;
   progress = 0;
+
+  // store JSON result here
+  reportResult: any = null;
 
   constructor(private http: HttpClient) {}
 
@@ -31,38 +33,25 @@ export class DashboardComponent {
     formData.append('file', file);
 
     // Reset state
-    this.downloadUrl = null;
-    this.downloadName = null;
+    this.reportResult = null;
     this.isUploading = true;
     this.progress = 0;
 
     this.http
       .post('http://localhost:3000/upload-pdf', formData, {
-        responseType: 'blob', // backend returns blob (json/zip/etc.)
         observe: 'events',
         reportProgress: true,
       })
       .subscribe({
-        next: (event: HttpEvent<Blob>) => {
+        next: (event: HttpEvent<any>) => {
           if (event.type === HttpEventType.UploadProgress) {
             this.progress = Math.round(
               (100 * event.loaded) / (event.total ?? 1),
             );
           } else if (event.type === HttpEventType.Response) {
-            const res = event as HttpResponse<Blob>;
-            const blob = res.body ?? new Blob();
-            const contentType =
-              blob.type || res.headers.get('Content-Type') || '';
-            const filename =
-              this.getFilename(res.headers.get('Content-Disposition')) ||
-              (contentType.includes('zip')
-                ? 'autotag-results.zip'
-                : 'autotag-results.json');
-
-            this.downloadUrl = window.URL.createObjectURL(blob);
-            this.downloadName = filename;
-
-            console.log('File ready for download:', filename);
+            const res = event as HttpResponse<any>;
+            this.reportResult = res.body; // JSON result
+            console.log('Report result:', this.reportResult);
             this.isUploading = false;
           }
         },
@@ -71,11 +60,5 @@ export class DashboardComponent {
           this.isUploading = false;
         },
       });
-  }
-
-  private getFilename(cd: string | null): string | null {
-    if (!cd) return null;
-    const match = /filename="?([^"]+)"?/.exec(cd);
-    return match?.[1] ?? null;
   }
 }
