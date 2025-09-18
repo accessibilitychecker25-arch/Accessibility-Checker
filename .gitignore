@@ -1,36 +1,42 @@
-name: Deploy static content to Pages
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-on:
-  push:
-    branches: ["kate/testing"]
-  workflow_dispatch:
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Build Angular app
-        run: npm ci && npx ng build --configuration production
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'dist/grade-checker/browser'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
