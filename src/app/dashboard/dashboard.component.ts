@@ -2,7 +2,7 @@
 import { Component } from '@angular/core';
 // import { environment } from '../../environments/environment';
 // For now, hardcode the API URL. Manually change as needed before build/deploy.
-const API_URL = 'http://my-node-env.eba-ysg2ei62.us-east-1.elasticbeanstalk.com';
+const API_URL = 'https://my-node-env.eba-ysg2ei62.us-east-1.elasticbeanstalk.com';
 import {
   HttpClient,
   HttpClientModule,
