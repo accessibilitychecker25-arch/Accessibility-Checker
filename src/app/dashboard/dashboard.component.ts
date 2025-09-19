@@ -1,6 +1,8 @@
 
 import { Component } from '@angular/core';
-import { environment } from '../../environments/environment';
+// import { environment } from '../../environments/environment';
+// For now, hardcode the API URL. Manually change as needed before build/deploy.
+const API_URL = 'http://my-node-env.eba-ysg2ei62.us-east-1.elasticbeanstalk.com';
 import {
   HttpClient,
   HttpClientModule,
@@ -39,7 +41,7 @@ export class DashboardComponent {
     this.progress = 0;
 
     this.http
-      .post(environment.apiUrl, formData, {
+  .post(API_URL, formData, {
         observe: 'events',
         reportProgress: true,
       })
