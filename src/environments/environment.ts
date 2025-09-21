@@ -1,4 +1,4 @@
 export const environment = { 
   production: false, 
-  apiUrl: 'https://accessibility-checker-nxwwc8q9q-kates-projects-e59a7a1b.vercel.app/upload-pdf' 
+  apiUrl: 'https://accessibility-checker-kates-projects-e59a7a1b.vercel.app/upload-pdf' 
 };
