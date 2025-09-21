@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/grade-checker",
+            "outputPath": "dist/grade-checker/broswer",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
