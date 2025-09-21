@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auth Handler</title>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script>
+    // Firebase configuration
+    var firebaseConfig = {
+      apiKey: 'AIzaSyBhW7HnnVFVO-4XFaJLk8mR7ymbxWhkTH4',
+      authDomain: 'kmoreland126.github.io',
+      projectId: 'senior-design-accessibility',
+      storageBucket: 'senior-design-accessibility.firebasestorage.app',
+      messagingSenderId: '521462721828',
+      appId: '1:521462721828:web:2f4295b2658db5903b17b1',
+      measurementId: 'G-XE1DW7D98T'
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    
+    // Handle the auth redirect
+    firebase.auth().getRedirectResult().then(function(result) {
+      if (result.credential) {
+        // User signed in successfully
+        console.log('User signed in:', result.user);
+        // Redirect back to main app
+        window.location.href = '/Accessibility-Checker/';
+      }
+    }).catch(function(error) {
+      console.error('Auth error:', error);
+    });
+  </script>
+</head>
+<body>
+  <p>Processing authentication...</p>
+  <script>
+    // Additional fallback handling
+    setTimeout(function() {
+      window.location.href = '/Accessibility-Checker/';
+    }, 3000);
+  </script>
+</body>
+</html>
