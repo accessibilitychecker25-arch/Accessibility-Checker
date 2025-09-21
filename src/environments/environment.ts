@@ -1,4 +1,4 @@
 export const environment = { 
   production: false, 
-  apiUrl: 'http://my-node-env.eba-ysg2ei62.us-east-1.elasticbeanstalk.com/upload-pdf' 
+  apiUrl: 'https://accessibility-checker-i7id5bhfq-kates-projects-e59a7a1b.vercel.app/upload-pdf' 
 };
