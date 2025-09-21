@@ -10,7 +10,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBhW7HnnVFVO-4XFaJLk8mR7ymbxWhkTH4',
-  authDomain: 'kmoreland126.github.io',
+  authDomain: 'senior-design-accessibility.web.app',
   projectId: 'senior-design-accessibility',
   storageBucket: 'senior-design-accessibility.firebasestorage.app',
   messagingSenderId: '521462721828',
