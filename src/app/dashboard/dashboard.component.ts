@@ -82,9 +82,9 @@ export class DashboardComponent {
       fileName: fileName,
       fileType: 'PDF',
       summary: {
-        successCount: 22,
-        failedCount: 4,
-        manualCheckCount: 3
+        successCount: 28,
+        failedCount: 2,
+        manualCheckCount: 2
       },
       results: [
         {
@@ -104,13 +104,13 @@ export class DashboardComponent {
         },
         {
           rule: "PDF Accessibility - Heading Structure",
-          status: "failed",
-          details: "Heading hierarchy is broken - H3 found without preceding H2"
+          status: "passed",
+          details: "Proper heading hierarchy maintained throughout document (H1→H2→H3)"
         },
         {
           rule: "PDF Accessibility - Alternative Text for Images",
-          status: "failed",
-          details: "3 images found without alternative text descriptions"
+          status: "passed",
+          details: "All images have descriptive alternative text for screen readers"
         },
         {
           rule: "PDF Accessibility - Table Headers",
@@ -124,8 +124,8 @@ export class DashboardComponent {
         },
         {
           rule: "PDF Accessibility - Color Contrast",
-          status: "failed",
-          details: "Text color contrast insufficient (3.2:1, requires 4.5:1 for WCAG AA)"
+          status: "passed",
+          details: "Text color contrast meets WCAG AA standards (4.5:1 or higher)"
         },
         {
           rule: "PDF Accessibility - Reading Order",
@@ -159,13 +159,93 @@ export class DashboardComponent {
         },
         {
           rule: "PDF Accessibility - Multimedia Content",
-          status: "failed",
-          details: "Video content lacks captions and audio descriptions"
+          status: "passed",
+          details: "Video content includes proper captions and audio descriptions"
         },
         {
           rule: "PDF Accessibility - Annotations",
-          status: "manual_check",
-          details: "Comments and annotations found - verify accessibility for screen readers"
+          status: "passed",
+          details: "Comments and annotations are accessible to screen readers"
+        },
+        {
+          rule: "PDF Accessibility - Lists Structure",
+          status: "passed",
+          details: "All lists use proper PDF list structure tags"
+        },
+        {
+          rule: "PDF Accessibility - Content Flow",
+          status: "passed",
+          details: "Document content flows logically from top to bottom"
+        },
+        {
+          rule: "PDF Accessibility - Interactive Elements",
+          status: "passed",
+          details: "All interactive elements are keyboard accessible"
+        },
+        {
+          rule: "PDF Accessibility - Text Selection",
+          status: "passed",
+          details: "All text is selectable and readable by assistive technology"
+        },
+        {
+          rule: "PDF Accessibility - Page Structure",
+          status: "passed",
+          details: "Pages have consistent structure and navigation aids"
+        },
+        {
+          rule: "PDF Accessibility - Zoom Compatibility",
+          status: "passed",
+          details: "Content remains readable and functional at 200% zoom"
+        },
+        {
+          rule: "PDF Accessibility - Metadata",
+          status: "passed",
+          details: "Document contains comprehensive accessibility metadata"
+        },
+        {
+          rule: "PDF Accessibility - Color Information",
+          status: "passed",
+          details: "Information is not conveyed by color alone"
+        },
+        {
+          rule: "PDF Accessibility - Focus Indicators",
+          status: "passed",
+          details: "Interactive elements have visible focus indicators"
+        },
+        {
+          rule: "PDF Accessibility - Error Prevention",
+          status: "passed",
+          details: "Form validation provides clear error messages and suggestions"
+        },
+        {
+          rule: "PDF Accessibility - Timing",
+          status: "passed",
+          details: "No time limits imposed on reading or interacting with content"
+        },
+        {
+          rule: "PDF Accessibility - Motion Control",
+          status: "passed",
+          details: "Animation and motion can be paused or disabled by users"
+        },
+        {
+          rule: "PDF Accessibility - Document Properties",
+          status: "passed",
+          details: "Document properties include title, author, subject, and keywords"
+        },
+        {
+          rule: "PDF Accessibility - Compliance Standards",
+          status: "passed",
+          details: "Document meets PDF/UA (Universal Accessibility) standards"
+        },
+        {
+          rule: "PDF Accessibility - Tagged Content",
+          status: "failed",
+          details: "All page content must be tagged so it can be read in the correct order by assistive technologies."
+        },
+        {
+          rule: "PDF Accessibility - Summary",
+          status: "failed",
+          details: "Tables should include a summary to explain their purpose and structure to users with disabilities."
         }
       ]
     };
@@ -176,9 +256,9 @@ export class DashboardComponent {
       fileName: fileName,
       fileType: 'Word Document',
       summary: {
-        successCount: 24,
-        failedCount: 5,
-        manualCheckCount: 4
+        successCount: 28,
+        failedCount: 2,
+        manualCheckCount: 2
       },
       results: [
         {
@@ -193,13 +273,13 @@ export class DashboardComponent {
         },
         {
           rule: "Word Accessibility - Heading Structure",
-          status: "failed",
-          details: "Missing Heading 2 between Heading 1 and Heading 3 - breaks hierarchy"
+          status: "passed",
+          details: "Proper heading hierarchy maintained throughout document (H1→H2→H3)"
         },
         {
           rule: "Word Accessibility - Alternative Text for Images",
-          status: "failed",
-          details: "2 images found without alt text. Add meaningful descriptions."
+          status: "passed",
+          details: "All images have descriptive alternative text for screen readers"
         },
         {
           rule: "Word Accessibility - Table Headers",
@@ -208,8 +288,8 @@ export class DashboardComponent {
         },
         {
           rule: "Word Accessibility - Link Text",
-          status: "failed",
-          details: "Found 2 links with generic text like 'click here' - use descriptive text"
+          status: "passed",
+          details: "All hyperlinks have descriptive text and proper destinations"
         },
         {
           rule: "Word Accessibility - Color Contrast",
@@ -228,8 +308,8 @@ export class DashboardComponent {
         },
         {
           rule: "Word Accessibility - Font and Formatting",
-          status: "failed",
-          details: "Text formatting relies on color alone - add additional indicators"
+          status: "passed",
+          details: "Text formatting uses multiple indicators beyond color alone"
         },
         {
           rule: "Word Accessibility - Hyperlink Destinations",
@@ -238,8 +318,8 @@ export class DashboardComponent {
         },
         {
           rule: "Word Accessibility - Content Controls",
-          status: "manual_check",
-          details: "Form elements found - verify labels and accessibility properties"
+          status: "passed",
+          details: "Form elements have proper labels and accessibility properties"
         },
         {
           rule: "Word Accessibility - Text Spacing",
@@ -248,8 +328,8 @@ export class DashboardComponent {
         },
         {
           rule: "Word Accessibility - Embedded Objects",
-          status: "failed",
-          details: "Embedded objects lack proper alternative descriptions"
+          status: "passed",
+          details: "Embedded objects include proper alternative descriptions"
         },
         {
           rule: "Word Accessibility - Document Structure",
@@ -258,8 +338,88 @@ export class DashboardComponent {
         },
         {
           rule: "Word Accessibility - Page Layout",
-          status: "manual_check",
-          details: "Complex layout detected - verify accessibility with assistive technology"
+          status: "passed",
+          details: "Document layout is accessible with assistive technology"
+        },
+        {
+          rule: "Word Accessibility - Style Consistency",
+          status: "passed",
+          details: "Consistent use of built-in styles throughout document"
+        },
+        {
+          rule: "Word Accessibility - Column Layout",
+          status: "passed",
+          details: "Multi-column layouts maintain logical reading order"
+        },
+        {
+          rule: "Word Accessibility - Text Wrapping",
+          status: "passed",
+          details: "Text wrapping around objects maintains document flow"
+        },
+        {
+          rule: "Word Accessibility - Navigation Aids",
+          status: "passed",
+          details: "Document includes table of contents and navigation bookmarks"
+        },
+        {
+          rule: "Word Accessibility - Zoom Compatibility",
+          status: "passed",
+          details: "Content remains readable and functional at 200% zoom"
+        },
+        {
+          rule: "Word Accessibility - Keyboard Navigation",
+          status: "passed",
+          details: "All interactive elements are accessible via keyboard"
+        },
+        {
+          rule: "Word Accessibility - Focus Indicators",
+          status: "passed",
+          details: "Interactive elements have visible focus indicators"
+        },
+        {
+          rule: "Word Accessibility - Color Information",
+          status: "passed",
+          details: "Information is not conveyed by color alone"
+        },
+        {
+          rule: "Word Accessibility - Error Prevention",
+          status: "passed",
+          details: "Form validation provides clear error messages"
+        },
+        {
+          rule: "Word Accessibility - Timing",
+          status: "passed",
+          details: "No time limits imposed on reading or interaction"
+        },
+        {
+          rule: "Word Accessibility - Motion Control",
+          status: "passed",
+          details: "Animation and motion can be controlled by users"
+        },
+        {
+          rule: "Word Accessibility - Document Metadata",
+          status: "passed",
+          details: "Document properties include comprehensive accessibility metadata"
+        },
+        {
+          rule: "Word Accessibility - Template Usage",
+          status: "passed",
+          details: "Document uses accessible Word templates and styles"
+        },
+        {
+          rule: "Word Accessibility - Track Changes",
+          status: "passed",
+          details: "Track changes and comments are accessible to screen readers"
+        },
+        {
+          rule: "Word Accessibility - Tagged Content",
+          status: "failed",
+          details: "All page content must be tagged so it can be read in the correct order by assistive technologies."
+        },
+        {
+          rule: "Word Accessibility - Summary",
+          status: "failed",
+          details: "Tables should include a summary to explain their purpose and structure to users with disabilities."
         }
       ]
     };
