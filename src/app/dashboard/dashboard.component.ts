@@ -262,162 +262,162 @@ export class DashboardComponent {
       },
       results: [
         {
-          rule: "Word Accessibility - Document Title",
+          rule: "Document Accessibility - Document Title",
           status: "passed",
           details: "Document has a descriptive title in document properties"
         },
         {
-          rule: "Word Accessibility - Document Language",
+          rule: "Document Accessibility - Document Language",
           status: "passed",
           details: "Document language is properly set to English (US)"
         },
         {
-          rule: "Word Accessibility - Heading Structure",
+          rule: "Document Accessibility - Tagged Structure",
+          status: "passed",
+          details: "Document is properly tagged for screen reader accessibility"
+        },
+        {
+          rule: "Document Accessibility - Heading Structure",
           status: "passed",
           details: "Proper heading hierarchy maintained throughout document (H1→H2→H3)"
         },
         {
-          rule: "Word Accessibility - Alternative Text for Images",
+          rule: "Document Accessibility - Alternative Text for Images",
           status: "passed",
           details: "All images have descriptive alternative text for screen readers"
         },
         {
-          rule: "Word Accessibility - Table Headers",
+          rule: "Document Accessibility - Table Headers",
           status: "manual_check",
-          details: "3 tables found. Verify header rows are properly designated."
+          details: "2 tables found - verify header cells are properly marked"
         },
         {
-          rule: "Word Accessibility - Link Text",
+          rule: "Document Accessibility - Link Text",
           status: "passed",
           details: "All hyperlinks have descriptive text and proper destinations"
         },
         {
-          rule: "Word Accessibility - Color Contrast",
+          rule: "Document Accessibility - Color Contrast",
           status: "passed",
           details: "Text color contrast meets WCAG AA standards (4.5:1 or higher)"
         },
         {
-          rule: "Word Accessibility - Lists Structure",
-          status: "passed",
-          details: "All lists use proper Word list formatting (not manual bullets)"
-        },
-        {
-          rule: "Word Accessibility - Reading Order",
+          rule: "Document Accessibility - Reading Order",
           status: "manual_check",
-          details: "Review document reading order with screen reader to ensure logical flow"
+          details: "Complex layout detected - verify logical reading order with screen reader"
         },
         {
-          rule: "Word Accessibility - Font and Formatting",
+          rule: "Document Accessibility - Form Fields",
           status: "passed",
-          details: "Text formatting uses multiple indicators beyond color alone"
+          details: "All form fields have proper labels and descriptions"
         },
         {
-          rule: "Word Accessibility - Hyperlink Destinations",
+          rule: "Document Accessibility - Bookmarks",
           status: "passed",
-          details: "All hyperlinks have clear, descriptive destinations"
+          details: "Document includes navigation bookmarks for long content"
         },
         {
-          rule: "Word Accessibility - Content Controls",
-          status: "manual_check",
-          details: "Form elements found - verify labels and accessibility properties"
-        },
-        {
-          rule: "Word Accessibility - Text Spacing",
+          rule: "Document Accessibility - Text Spacing",
           status: "passed",
-          details: "Line spacing and paragraph spacing meet accessibility guidelines"
+          details: "Line and paragraph spacing meets accessibility guidelines"
         },
         {
-          rule: "Word Accessibility - Embedded Objects",
+          rule: "Document Accessibility - Font Embedding",
           status: "passed",
-          details: "Embedded objects include proper alternative descriptions"
+          details: "All fonts are properly embedded for consistent display"
         },
         {
-          rule: "Word Accessibility - Document Structure",
+          rule: "Document Accessibility - Security Restrictions",
           status: "passed",
-          details: "Document uses proper styles instead of manual formatting"
+          details: "No security restrictions prevent assistive technology access"
         },
         {
-          rule: "Word Accessibility - Page Layout",
+          rule: "Document Accessibility - Multimedia Content",
           status: "passed",
-          details: "Document layout is accessible with assistive technology"
+          details: "Video content includes proper captions and audio descriptions"
         },
         {
-          rule: "Word Accessibility - Style Consistency",
+          rule: "Document Accessibility - Annotations",
           status: "passed",
-          details: "Consistent use of built-in styles throughout document"
+          details: "Comments and annotations are accessible to screen readers"
         },
         {
-          rule: "Word Accessibility - Column Layout",
+          rule: "Document Accessibility - Lists Structure",
           status: "passed",
-          details: "Multi-column layouts maintain logical reading order"
+          details: "All lists use proper structure tags"
         },
         {
-          rule: "Word Accessibility - Text Wrapping",
+          rule: "Document Accessibility - Content Flow",
           status: "passed",
-          details: "Text wrapping around objects maintains document flow"
+          details: "Document content flows logically from top to bottom"
         },
         {
-          rule: "Word Accessibility - Navigation Aids",
+          rule: "Document Accessibility - Interactive Elements",
           status: "passed",
-          details: "Document includes table of contents and navigation bookmarks"
+          details: "All interactive elements are keyboard accessible"
         },
         {
-          rule: "Word Accessibility - Zoom Compatibility",
+          rule: "Document Accessibility - Text Selection",
+          status: "passed",
+          details: "All text is selectable and readable by assistive technology"
+        },
+        {
+          rule: "Document Accessibility - Page Structure",
+          status: "passed",
+          details: "Pages have consistent structure and navigation aids"
+        },
+        {
+          rule: "Document Accessibility - Zoom Compatibility",
           status: "passed",
           details: "Content remains readable and functional at 200% zoom"
         },
         {
-          rule: "Word Accessibility - Keyboard Navigation",
+          rule: "Document Accessibility - Metadata",
           status: "passed",
-          details: "All interactive elements are accessible via keyboard"
+          details: "Document contains comprehensive accessibility metadata"
         },
         {
-          rule: "Word Accessibility - Focus Indicators",
-          status: "passed",
-          details: "Interactive elements have visible focus indicators"
-        },
-        {
-          rule: "Word Accessibility - Color Information",
+          rule: "Document Accessibility - Color Information",
           status: "passed",
           details: "Information is not conveyed by color alone"
         },
         {
-          rule: "Word Accessibility - Error Prevention",
+          rule: "Document Accessibility - Focus Indicators",
           status: "passed",
-          details: "Form validation provides clear error messages"
+          details: "Interactive elements have visible focus indicators"
         },
         {
-          rule: "Word Accessibility - Timing",
+          rule: "Document Accessibility - Error Prevention",
           status: "passed",
-          details: "No time limits imposed on reading or interaction"
+          details: "Form validation provides clear error messages and suggestions"
         },
         {
-          rule: "Word Accessibility - Motion Control",
+          rule: "Document Accessibility - Timing",
           status: "passed",
-          details: "Animation and motion can be controlled by users"
+          details: "No time limits imposed on reading or interacting with content"
         },
         {
-          rule: "Word Accessibility - Document Metadata",
+          rule: "Document Accessibility - Motion Control",
           status: "passed",
-          details: "Document properties include comprehensive accessibility metadata"
+          details: "Animation and motion can be paused or disabled by users"
         },
         {
-          rule: "Word Accessibility - Template Usage",
+          rule: "Document Accessibility - Document Properties",
           status: "passed",
-          details: "Document uses accessible Word templates and styles"
+          details: "Document properties include title, author, subject, and keywords"
         },
         {
-          rule: "Word Accessibility - Track Changes",
+          rule: "Document Accessibility - Compliance Standards",
           status: "passed",
-          details: "Track changes and comments are accessible to screen readers"
+          details: "Document meets accessibility standards"
         },
         {
-          rule: "Word Accessibility - Tagged Content",
+          rule: "Document Accessibility - Tagged Content",
           status: "failed",
           details: "All page content must be tagged so it can be read in the correct order by assistive technologies."
         },
         {
-          rule: "Word Accessibility - Summary",
+          rule: "Document Accessibility - Summary",
           status: "failed",
           details: "Tables should include a summary to explain their purpose and structure to users with disabilities."
         }
