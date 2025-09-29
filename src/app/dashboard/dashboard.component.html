@@ -18,9 +18,18 @@
   <div class="w-full p-4 bg-gray-100 dark:bg-gray-800 rounded shadow">
     <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
       Accessibility Report - {{ reportResult.fileType || 'Document' }}
+      <span *ngIf="reportResult.isRealData" class="ml-2 inline-block px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200">
+        ✅ Real Analysis
+      </span>
+      <span *ngIf="reportResult.isMockData" class="ml-2 inline-block px-2 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
+        📝 Demo Data
+      </span>
     </h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
       <strong>File:</strong> {{ reportResult.fileName }}
+    </p>
+    <p *ngIf="reportResult.apiMessage" class="text-sm text-blue-600 dark:text-blue-400 mb-4 italic">
+      ℹ️ {{ reportResult.apiMessage }}
     </p>
 
     <!-- Summary -->
