@@ -67,6 +67,9 @@ export class DashboardComponent {
           if (fileExtension === 'docx' || fileExtension === 'doc') {
             // Word document accessibility report
             this.reportResult = this.getWordDocumentMockReport(file.name);
+          } else if (fileExtension === 'pptx' || fileExtension === 'ppt') {
+            // PowerPoint accessibility report
+            this.reportResult = this.getPowerPointMockReport(file.name);
           } else {
             // PDF accessibility report (existing)
             this.reportResult = this.getPdfMockReport(file.name);
@@ -539,6 +542,148 @@ export class DashboardComponent {
       { rule: "Document Accessibility - Interactive Elements", status: "passed", details: "All interactive elements are keyboard accessible" },
       { rule: "Document Accessibility - Zoom Compatibility", status: "passed", details: "Content remains readable and functional at 200% zoom" },
       { rule: "Document Accessibility - Security Restrictions", status: "passed", details: "No security restrictions prevent assistive technology access" }
+    ];
+
+    while (baseResults.length < totalNeeded && additionalPassed.length > 0) {
+      baseResults.push(additionalPassed.shift()!);
+    }
+
+    return baseResults;
+  }
+
+  private getPowerPointMockReport(fileName: string) {
+    // Create variation based on filename for PowerPoint presentations
+    const scenarios = [
+      {
+        successCount: 26,
+        failedCount: 3,
+        manualCheckCount: 3,
+        failures: [
+          { Rule: "Slide titles", Description: "Some slides are missing descriptive titles for screen reader navigation." },
+          { Rule: "Alternative text", Description: "Images and graphics lack alternative text descriptions." },
+          { Rule: "Reading order", Description: "Slide content reading order is not logical for assistive technologies." }
+        ],
+        needsManualCheck: [
+          { Rule: "Color contrast", Description: "Verify text and background color combinations meet contrast requirements." },
+          { Rule: "Animation timing", Description: "Check that animations and transitions don't interfere with accessibility." },
+          { Rule: "Video captions", Description: "Ensure embedded videos include captions and transcripts." }
+        ]
+      },
+      {
+        successCount: 24,
+        failedCount: 4,
+        manualCheckCount: 4,
+        failures: [
+          { Rule: "Table headers", Description: "Tables in slides lack proper header structure for screen readers." },
+          { Rule: "Link descriptions", Description: "Hyperlinks use generic text instead of descriptive labels." },
+          { Rule: "Font accessibility", Description: "Some fonts are too small or difficult to read for visually impaired users." },
+          { Rule: "Content structure", Description: "Slides lack proper heading hierarchy and content organization." }
+        ],
+        needsManualCheck: [
+          { Rule: "Slide transitions", Description: "Review slide transition effects for accessibility compatibility." },
+          { Rule: "Audio descriptions", Description: "Check if audio content has appropriate descriptions or transcripts." },
+          { Rule: "Interactive elements", Description: "Verify interactive slide elements are keyboard accessible." },
+          { Rule: "Template consistency", Description: "Ensure slide templates follow consistent accessibility patterns." }
+        ]
+      },
+      {
+        successCount: 29,
+        failedCount: 2,
+        manualCheckCount: 1,
+        failures: [
+          { Rule: "Speaker notes", Description: "Some slides lack speaker notes that could aid screen reader users." },
+          { Rule: "Chart accessibility", Description: "Charts and graphs need better alternative text and data tables." }
+        ],
+        needsManualCheck: [
+          { Rule: "Presentation flow", Description: "Review overall presentation flow and logical sequence for accessibility." }
+        ]
+      }
+    ];
+
+    // Select scenario based on filename hash
+    const fileHash = fileName.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+    const scenarioIndex = Math.abs(fileHash) % scenarios.length;
+    const selectedScenario = scenarios[scenarioIndex];
+
+    return {
+      fileName: fileName,
+      fileType: 'PowerPoint Presentation',
+      summary: {
+        successCount: selectedScenario.successCount,
+        failedCount: selectedScenario.failedCount,
+        manualCheckCount: selectedScenario.manualCheckCount
+      },
+      results: [
+        // Dynamic results based on selected scenario
+        ...this.generatePowerPointResultsForScenario(selectedScenario)
+      ],
+      failures: selectedScenario.failures,
+      needsManualCheck: selectedScenario.needsManualCheck
+    };
+  }
+
+  private generatePowerPointResultsForScenario(scenario: any) {
+    const baseResults = [
+      { rule: "PowerPoint Accessibility - Presentation Title", status: "passed", details: "Presentation has a descriptive title and metadata" },
+      { rule: "PowerPoint Accessibility - Language Setting", status: "passed", details: "Presentation language is properly set for screen readers" },
+      { rule: "PowerPoint Accessibility - Slide Layout", status: "passed", details: "Slides use standard layouts for consistent navigation" }
+    ];
+
+    // Add failed results based on scenario
+    scenario.failures.forEach((failure: any) => {
+      if (failure.Rule === "Slide titles") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Slide Titles", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Alternative text") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Alternative Text", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Reading order") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Reading Order", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Table headers") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Table Structure", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Link descriptions") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Hyperlinks", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Font accessibility") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Typography", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Content structure") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Content Organization", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Speaker notes") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Speaker Notes", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Chart accessibility") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Charts and Graphs", status: "failed", details: failure.Description });
+      }
+    });
+
+    // Add manual check results based on scenario
+    scenario.needsManualCheck.forEach((check: any) => {
+      if (check.Rule === "Color contrast") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Color Contrast", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Animation timing") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Animations", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Video captions") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Multimedia Content", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Slide transitions") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Transitions", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Audio descriptions") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Audio Content", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Interactive elements") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Interactive Features", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Template consistency") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Template Design", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Presentation flow") {
+        baseResults.push({ rule: "PowerPoint Accessibility - Logical Flow", status: "manual_check", details: check.Description });
+      }
+    });
+
+    // Fill remaining results as passed to reach the target count
+    const totalNeeded = scenario.successCount + scenario.failedCount + scenario.manualCheckCount;
+    const additionalPassed = [
+      { rule: "PowerPoint Accessibility - Slide Masters", status: "passed", details: "Slide masters use accessible design patterns" },
+      { rule: "PowerPoint Accessibility - Text Formatting", status: "passed", details: "Text uses proper formatting and sufficient size" },
+      { rule: "PowerPoint Accessibility - Background Images", status: "passed", details: "Background images don't interfere with text readability" },
+      { rule: "PowerPoint Accessibility - Bullet Points", status: "passed", details: "Lists use proper bullet and numbering formats" },
+      { rule: "PowerPoint Accessibility - Keyboard Navigation", status: "passed", details: "All slide elements are accessible via keyboard" },
+      { rule: "PowerPoint Accessibility - Embedded Objects", status: "passed", details: "Embedded objects have proper accessibility properties" },
+      { rule: "PowerPoint Accessibility - Slide Numbering", status: "passed", details: "Slides include navigation aids and numbering" },
+      { rule: "PowerPoint Accessibility - Print Layout", status: "passed", details: "Presentation maintains accessibility when printed or exported" }
     ];
 
     while (baseResults.length < totalNeeded && additionalPassed.length > 0) {
