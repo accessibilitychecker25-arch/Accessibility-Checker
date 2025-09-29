@@ -32,6 +32,21 @@ export class DashboardComponent {
     this.progress = 0;
     this.isUploading = true;
 
+    // First test basic connectivity
+    console.log('Testing backend connectivity...');
+    this.http.get(`${environment.apiUrl}`).subscribe({
+      next: (response) => {
+        console.log('✅ Backend is accessible:', response);
+        this.uploadFileToBackend(file);
+      },
+      error: (err) => {
+        console.error('❌ Backend connectivity test failed:', err);
+        this.uploadFileToBackend(file); // Try upload anyway
+      }
+    });
+  }
+
+  private uploadFileToBackend(file: File) {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -44,6 +59,7 @@ export class DashboardComponent {
         observe: 'events',
         headers: {
           'Accept': 'application/json'
+          // Don't set Content-Type - let browser set it for FormData with boundary
         }
       })
       .subscribe({
@@ -63,6 +79,9 @@ export class DashboardComponent {
         },
         error: (err) => {
           console.error('❌ Backend API Error:', err);
+          console.error('Error Status:', err.status);
+          console.error('Error Message:', err.message);
+          console.error('Error URL:', uploadUrl);
           console.log('Falling back to mock response for demonstration');
           
           // Provide different mock responses based on file type
