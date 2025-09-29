@@ -53,99 +53,19 @@ export class DashboardComponent {
   }
 
   private uploadFileToBackend(file: File) {
-    // Determine which endpoint to use based on file type
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    const isOfficeFile = ['docx', 'doc', 'pptx', 'ppt'].includes(fileExtension || '');
-    const endpoint = isOfficeFile ? environment.officeEndpoint : environment.uploadEndpoint;
-    const uploadUrl = `${environment.apiUrl}${endpoint}`;
-    console.log(`Uploading ${fileExtension} file to:`, uploadUrl);
+    // Simple PDF-only processing
+    const uploadUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
+    console.log('Uploading PDF to:', uploadUrl);
 
-    let requestData: any;
-    let requestHeaders: any = { 'Accept': 'application/json' };
+    const formData = new FormData();
+    formData.append('file', file);
 
-    if (isOfficeFile) {
-      // Office files need JSON with fileId in req.body
-      // Convert file to base64 and send as JSON
-      console.log('Processing Office file for JSON submission...');
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64Data = reader.result as string;
-        const base64Content = base64Data.split(',')[1]; // Remove data URL prefix
-        
-        // Try minimal structure to see if we get a different error
-        const requestBody = {
-          fileId: file.name.replace(/\.[^/.]+$/, ""), // Just filename without extension
-          fileName: file.name
-          // Skip file content for now to see if the issue is with processing vs structure
-        };
-        
-        console.log('Sending minimal Office file JSON:', { 
-          fileId: requestBody.fileId, 
-          fileName: requestBody.fileName,
-          note: 'Testing without file content to isolate the issue'
-        });
-        
-        // Send JSON request for Office files
-        this.http.post<any>(uploadUrl, requestBody, {
-          reportProgress: true,
-          observe: 'events',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        }).subscribe({
-          next: (event) => {
-            if (event.type === HttpEventType.UploadProgress) {
-              this.progress = Math.round((100 * event.loaded) / (event.total ?? 1));
-            } else if (event.type === HttpEventType.Response) {
-              const res = event as HttpResponse<any>;
-              console.log('✅ Office file API Response:', res.body);
-              this.reportResult = this.processBackendResponse(res.body, file.name);
-              this.isUploading = false;
-            }
-          },
-          error: (err) => {
-            console.error('❌ Office File Backend API Error:', err);
-            console.error('Error Status:', err.status);
-            console.error('Error Body:', err.error);
-            
-            let errorMessage = 'Backend error processing Office file. Showing demo results.';
-            let backendErrorDetails = '';
-            
-            if (err.error && typeof err.error === 'object' && err.error.error) {
-              backendErrorDetails = `Backend says: ${err.error.error}`;
-            }
-            
-            // Show appropriate mock response
-            const fileExtension = file.name.split('.').pop()?.toLowerCase();
-            if (fileExtension === 'docx' || fileExtension === 'doc') {
-              this.reportResult = this.getWordDocumentMockReport(file.name);
-            } else if (fileExtension === 'pptx' || fileExtension === 'ppt') {
-              this.reportResult = this.getPowerPointMockReport(file.name);
-            } else {
-              this.reportResult = this.getWordDocumentMockReport(file.name);
-            }
-            
-            this.reportResult.isMockData = true;
-            this.reportResult.apiMessage = errorMessage;
-            this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status}`;
-            this.isUploading = false;
-          }
-        });
-      };
-      reader.readAsDataURL(file);
-      return; // Exit early for Office files
-    } else {
-      // For PDFs, use FormData as before
-      requestData = new FormData();
-      requestData.append('file', file);
-      console.log('Sending PDF file as FormData');
-    }
-
-    this.http.post<any>(uploadUrl, requestData, {
+    this.http.post<any>(uploadUrl, formData, {
         reportProgress: true,
         observe: 'events',
-        headers: requestHeaders
+        headers: {
+          'Accept': 'application/json'
+        }
       })
       .subscribe({
         next: (event) => {
@@ -175,37 +95,25 @@ export class DashboardComponent {
           // Try to get the actual backend error message
           if (err.error && typeof err.error === 'object' && err.error.error) {
             backendErrorDetails = `Backend says: ${err.error.error}`;
-            errorMessage = `Backend error processing ${isOfficeFile ? 'Office' : 'PDF'} file. Showing demo results.`;
+            errorMessage = `Backend error processing PDF file. Showing demo results.`;
           } else if (err.status === 413) {
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-            errorMessage = `File too large (${fileSizeMB}MB). Backend has size limits. Showing demo results.`;
-            backendErrorDetails = 'Try a smaller file or compress the document before uploading.';
+            errorMessage = `File too large (${fileSizeMB}MB). Try a smaller PDF file.`;
           } else if (err.status === 404) {
-            errorMessage = 'API endpoint not found. Backend may need configuration. Showing demo results.';
+            errorMessage = 'PDF processing service not found.';
           } else if (err.status === 0) {
-            errorMessage = 'Cannot connect to backend server. Showing demo results.';
-          } else if (err.status >= 500) {
-            errorMessage = 'Backend server error. Showing demo results.';
+            errorMessage = 'Cannot connect to PDF processing service.';
           }
           
-          console.log('Falling back to mock response:', errorMessage);
-          console.log('Backend error details:', backendErrorDetails);
+          console.log('Falling back to PDF mock response:', errorMessage);
           
-          // Provide different mock responses based on file type
-          const fileExtension = file.name.split('.').pop()?.toLowerCase();
+          // Show PDF mock response
+          this.reportResult = this.getPdfMockReport(file.name);
           
-          if (fileExtension === 'docx' || fileExtension === 'doc') {
-            this.reportResult = this.getWordDocumentMockReport(file.name);
-          } else if (fileExtension === 'pptx' || fileExtension === 'ppt') {
-            this.reportResult = this.getPowerPointMockReport(file.name);
-          } else {
-            this.reportResult = this.getPdfMockReport(file.name);
-          }
-          
-          // Mark as mock data with detailed error info
+          // Mark as mock data
           this.reportResult.isMockData = true;
           this.reportResult.apiMessage = errorMessage;
-          this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status} - ${err.statusText || 'Network Error'}`;
+          this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status}`;
           
           this.isUploading = false;
         },
