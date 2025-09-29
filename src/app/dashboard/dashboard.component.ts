@@ -72,19 +72,17 @@ export class DashboardComponent {
         const base64Data = reader.result as string;
         const base64Content = base64Data.split(',')[1]; // Remove data URL prefix
         
-        // Create the exact JSON structure the backend expects
+        // Try minimal structure to see if we get a different error
         const requestBody = {
-          fileId: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for fileId
-          fileContent: base64Content,
-          fileName: file.name,
-          mimeType: file.type
+          fileId: file.name.replace(/\.[^/.]+$/, ""), // Just filename without extension
+          fileName: file.name
+          // Skip file content for now to see if the issue is with processing vs structure
         };
         
-        console.log('Sending Office file JSON:', { 
+        console.log('Sending minimal Office file JSON:', { 
           fileId: requestBody.fileId, 
-          fileName: requestBody.fileName, 
-          mimeType: requestBody.mimeType,
-          contentLength: requestBody.fileContent.length 
+          fileName: requestBody.fileName,
+          note: 'Testing without file content to isolate the issue'
         });
         
         // Send JSON request for Office files
