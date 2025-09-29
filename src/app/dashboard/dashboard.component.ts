@@ -128,6 +128,30 @@ export class DashboardComponent {
     console.log('📋 Response keys:', Object.keys(response || {}));
     console.log('📄 Full response:', JSON.stringify(response, null, 2));
     
+    // Handle the actual format your backend returns
+    if (response.summary && (response.failures || response.needsManualCheck)) {
+      console.log('✅ Backend format recognized - processing real accessibility data');
+      return {
+        ...response,
+        fileName: fileName,
+        isRealData: true,
+        apiMessage: 'Results from real Adobe PDF accessibility analysis',
+        // Create results array from failures and manual checks for display
+        results: [
+          ...(response.failures || []).map((f: any) => ({
+            rule: f.Rule,
+            status: 'failed',
+            details: f.Description
+          })),
+          ...(response.needsManualCheck || []).map((m: any) => ({
+            rule: m.Rule,
+            status: 'manual_check', 
+            details: m.Description
+          }))
+        ]
+      };
+    }
+    
     // If the backend returns our expected format, use it directly
     if (response.summary && response.results) {
       return {
