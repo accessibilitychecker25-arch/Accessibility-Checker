@@ -215,7 +215,10 @@ export class DashboardComponent {
 
 
   private processBackendResponse(response: any, fileName: string): any {
-    console.log('Processing backend response:', response);
+    console.log('🔍 Processing backend response for:', fileName);
+    console.log('📊 Response type:', typeof response);
+    console.log('📋 Response keys:', Object.keys(response || {}));
+    console.log('📄 Full response:', JSON.stringify(response, null, 2));
     
     // If the backend returns our expected format, use it directly
     if (response.summary && response.results) {
@@ -247,16 +250,25 @@ export class DashboardComponent {
     }
 
     // Default fallback if response format is unexpected
-    console.warn('Unexpected backend response format:', response);
+    console.warn('⚠️ UNEXPECTED BACKEND RESPONSE FORMAT - This is why you only see 1 test!');
+    console.warn('Expected: response.summary + response.results OR response.accessibility_report/analysis');
+    console.warn('Got response with keys:', Object.keys(response || {}));
+    console.warn('Full unexpected response:', response);
+    
     return {
       fileName: fileName,
       fileType: 'Document',
       isRealData: true,
-      apiMessage: 'Document processed successfully',
+      apiMessage: '⚠️ Backend response in unexpected format - showing simplified result. Check console for details.',
       summary: { successCount: 1, failedCount: 0, manualCheckCount: 0 },
-      results: [{ rule: 'Document Processing', status: 'passed', details: 'Document was successfully processed' }],
+      results: [{ 
+        rule: 'Document Processing', 
+        status: 'passed', 
+        details: 'Document was processed, but response format needs adjustment. Check browser console.' 
+      }],
       failures: [],
-      needsManualCheck: []
+      needsManualCheck: [],
+      debugInfo: 'Backend response format mismatch - check console logs'
     };
   }
 
