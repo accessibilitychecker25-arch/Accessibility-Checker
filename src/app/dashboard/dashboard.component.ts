@@ -272,13 +272,62 @@ export class DashboardComponent {
   }
 
   private getWordDocumentMockReport(fileName: string) {
+    // Create variation based on filename or random factors
+    const scenarios = [
+      {
+        successCount: 28,
+        failedCount: 2,
+        manualCheckCount: 2,
+        failures: [
+          { Rule: "Tagged content", Description: "All page content must be tagged so it can be read in the correct order by assistive technologies." },
+          { Rule: "Summary", Description: "Tables should include a summary to explain their purpose and structure to users with disabilities." }
+        ],
+        needsManualCheck: [
+          { Rule: "Logical Reading Order", Description: "The content must be structured so that it follows a natural and logical reading sequence." },
+          { Rule: "Color contrast", Description: "Text and visuals must have sufficient color contrast to be readable by users with visual impairments." }
+        ]
+      },
+      {
+        successCount: 25,
+        failedCount: 4,
+        manualCheckCount: 3,
+        failures: [
+          { Rule: "Alternative text", Description: "Images are missing alternative text descriptions for screen readers." },
+          { Rule: "Heading structure", Description: "Document has improper heading hierarchy that breaks navigation flow." },
+          { Rule: "Link descriptions", Description: "Hyperlinks use generic text like 'click here' instead of descriptive labels." },
+          { Rule: "Color dependency", Description: "Information is conveyed using color alone without additional indicators." }
+        ],
+        needsManualCheck: [
+          { Rule: "Table headers", Description: "Verify that table header cells are properly designated for screen readers." },
+          { Rule: "Document structure", Description: "Review document uses consistent styles rather than manual formatting." },
+          { Rule: "Reading flow", Description: "Check that content follows logical reading order with assistive technology." }
+        ]
+      },
+      {
+        successCount: 30,
+        failedCount: 1,
+        manualCheckCount: 1,
+        failures: [
+          { Rule: "Font embedding", Description: "Some fonts are not properly embedded which may cause display issues." }
+        ],
+        needsManualCheck: [
+          { Rule: "Form controls", Description: "Verify that form elements have appropriate labels and descriptions." }
+        ]
+      }
+    ];
+
+    // Select scenario based on filename hash or random
+    const fileHash = fileName.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+    const scenarioIndex = Math.abs(fileHash) % scenarios.length;
+    const selectedScenario = scenarios[scenarioIndex];
+
     return {
       fileName: fileName,
       fileType: 'Word Document',
       summary: {
-        successCount: 28,
-        failedCount: 2,
-        manualCheckCount: 2
+        successCount: selectedScenario.successCount,
+        failedCount: selectedScenario.failedCount,
+        manualCheckCount: selectedScenario.manualCheckCount
       },
       results: [
         {
@@ -431,37 +480,71 @@ export class DashboardComponent {
           status: "passed",
           details: "Document meets accessibility standards"
         },
-        {
-          rule: "Document Accessibility - Tagged Content",
-          status: "failed",
-          details: "All page content must be tagged so it can be read in the correct order by assistive technologies."
-        },
-        {
-          rule: "Document Accessibility - Summary",
-          status: "failed",
-          details: "Tables should include a summary to explain their purpose and structure to users with disabilities."
-        }
+        // Dynamic results based on selected scenario
+        ...this.generateResultsForScenario(selectedScenario)
       ],
-      failures: [
-        {
-          Rule: "Tagged content",
-          Description: "All page content must be tagged so it can be read in the correct order by assistive technologies."
-        },
-        {
-          Rule: "Summary",
-          Description: "Tables should include a summary to explain their purpose and structure to users with disabilities."
-        }
-      ],
-      needsManualCheck: [
-        {
-          Rule: "Logical Reading Order",
-          Description: "The content must be structured so that it follows a natural and logical reading sequence."
-        },
-        {
-          Rule: "Color contrast",
-          Description: "Text and visuals must have sufficient color contrast to be readable by users with visual impairments."
-        }
-      ]
+      failures: selectedScenario.failures,
+      needsManualCheck: selectedScenario.needsManualCheck
     };
+  }
+
+  private generateResultsForScenario(scenario: any) {
+    const baseResults = [
+      { rule: "Document Accessibility - Document Title", status: "passed", details: "Document has a descriptive title in document properties" },
+      { rule: "Document Accessibility - Document Language", status: "passed", details: "Document language is properly set to English (US)" },
+      { rule: "Document Accessibility - Tagged Structure", status: "passed", details: "Document is properly tagged for screen reader accessibility" }
+    ];
+
+    // Add failed results based on scenario
+    scenario.failures.forEach((failure: any) => {
+      if (failure.Rule === "Tagged content") {
+        baseResults.push({ rule: "Document Accessibility - Tagged Content", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Summary") {
+        baseResults.push({ rule: "Document Accessibility - Summary", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Alternative text") {
+        baseResults.push({ rule: "Document Accessibility - Alternative Text", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Heading structure") {
+        baseResults.push({ rule: "Document Accessibility - Heading Structure", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Link descriptions") {
+        baseResults.push({ rule: "Document Accessibility - Link Text", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Color dependency") {
+        baseResults.push({ rule: "Document Accessibility - Color Information", status: "failed", details: failure.Description });
+      } else if (failure.Rule === "Font embedding") {
+        baseResults.push({ rule: "Document Accessibility - Font Embedding", status: "failed", details: failure.Description });
+      }
+    });
+
+    // Add manual check results based on scenario
+    scenario.needsManualCheck.forEach((check: any) => {
+      if (check.Rule === "Logical Reading Order") {
+        baseResults.push({ rule: "Document Accessibility - Reading Order", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Color contrast") {
+        baseResults.push({ rule: "Document Accessibility - Color Contrast", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Table headers") {
+        baseResults.push({ rule: "Document Accessibility - Table Headers", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Document structure") {
+        baseResults.push({ rule: "Document Accessibility - Document Structure", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Reading flow") {
+        baseResults.push({ rule: "Document Accessibility - Content Flow", status: "manual_check", details: check.Description });
+      } else if (check.Rule === "Form controls") {
+        baseResults.push({ rule: "Document Accessibility - Form Fields", status: "manual_check", details: check.Description });
+      }
+    });
+
+    // Fill remaining results as passed to reach the target count
+    const totalNeeded = scenario.successCount + scenario.failedCount + scenario.manualCheckCount;
+    const additionalPassed = [
+      { rule: "Document Accessibility - Text Spacing", status: "passed", details: "Line spacing and paragraph spacing meet accessibility guidelines" },
+      { rule: "Document Accessibility - Lists Structure", status: "passed", details: "All lists use proper structure tags" },
+      { rule: "Document Accessibility - Interactive Elements", status: "passed", details: "All interactive elements are keyboard accessible" },
+      { rule: "Document Accessibility - Zoom Compatibility", status: "passed", details: "Content remains readable and functional at 200% zoom" },
+      { rule: "Document Accessibility - Security Restrictions", status: "passed", details: "No security restrictions prevent assistive technology access" }
+    ];
+
+    while (baseResults.length < totalNeeded && additionalPassed.length > 0) {
+      baseResults.push(additionalPassed.shift()!);
+    }
+
+    return baseResults;
   }
 }
