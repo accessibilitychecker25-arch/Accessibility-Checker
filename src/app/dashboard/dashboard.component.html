@@ -28,8 +28,11 @@
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
       <strong>File:</strong> {{ reportResult.fileName }}
     </p>
-    <p *ngIf="reportResult.apiMessage" class="text-sm text-blue-600 dark:text-blue-400 mb-4 italic">
+    <p *ngIf="reportResult.apiMessage" class="text-sm text-blue-600 dark:text-blue-400 mb-2 italic">
       ℹ️ {{ reportResult.apiMessage }}
+    </p>
+    <p *ngIf="reportResult.errorDetails" class="text-xs text-gray-500 dark:text-gray-400 mb-4 font-mono bg-gray-50 dark:bg-gray-700 p-2 rounded">
+      🔧 {{ reportResult.errorDetails }}
     </p>
 
     <!-- Summary -->

@@ -82,7 +82,18 @@ export class DashboardComponent {
           console.error('Error Status:', err.status);
           console.error('Error Message:', err.message);
           console.error('Error URL:', uploadUrl);
-          console.log('Falling back to mock response for demonstration');
+          
+          let errorMessage = 'Backend temporarily unavailable. Showing sample results.';
+          
+          if (err.status === 404) {
+            errorMessage = 'API endpoint not found. Backend may need configuration. Showing demo results.';
+          } else if (err.status === 0) {
+            errorMessage = 'Cannot connect to backend server. Showing demo results.';
+          } else if (err.status >= 500) {
+            errorMessage = 'Backend server error. Showing demo results.';
+          }
+          
+          console.log('Falling back to mock response:', errorMessage);
           
           // Provide different mock responses based on file type
           const fileExtension = file.name.split('.').pop()?.toLowerCase();
@@ -95,9 +106,10 @@ export class DashboardComponent {
             this.reportResult = this.getPdfMockReport(file.name);
           }
           
-          // Mark as mock data
+          // Mark as mock data with detailed error info
           this.reportResult.isMockData = true;
-          this.reportResult.apiMessage = 'Backend temporarily unavailable. Showing sample results.';
+          this.reportResult.apiMessage = errorMessage;
+          this.reportResult.errorDetails = `Status: ${err.status} - ${err.statusText || 'Network Error'}`;
           
           this.isUploading = false;
         },
