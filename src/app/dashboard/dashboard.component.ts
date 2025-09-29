@@ -54,17 +54,16 @@ export class DashboardComponent {
 
   private uploadFileToBackend(file: File) {
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    const isWordFile = ['docx', 'doc'].includes(fileExtension || '');
     const isPdfFile = fileExtension === 'pdf';
     
     // Basic file validation
-    if (!isPdfFile && !isWordFile) {
+    if (!isPdfFile) {
       console.error('❌ Unsupported file type:', fileExtension);
       this.reportResult = {
         fileName: file.name,
         isError: true,
-        apiMessage: `Unsupported file type: .${fileExtension}. Please upload a PDF or Word document.`,
-        errorDetails: 'Only PDF (.pdf) and Word (.doc, .docx) files are supported.'
+        apiMessage: `Unsupported file type: .${fileExtension}. Please upload a PDF document.`,
+        errorDetails: 'Only PDF (.pdf) files are supported.'
       };
       this.isUploading = false;
       return;
@@ -76,7 +75,7 @@ export class DashboardComponent {
       this.reportResult = {
         fileName: file.name,
         isError: true,
-        apiMessage: 'Empty file detected. Please select a valid document.',
+        apiMessage: 'Empty file detected. Please select a valid PDF document.',
         errorDetails: 'File size is 0 bytes.'
       };
       this.isUploading = false;
@@ -84,14 +83,8 @@ export class DashboardComponent {
     }
     
     console.log(`📄 File validation passed: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-    
-    if (isWordFile) {
-      console.log('Converting Word document to PDF before accessibility analysis...');
-      this.convertWordToPdfAndUpload(file);
-    } else {
-      console.log('Processing PDF directly...');
-      this.uploadPdfFile(file);
-    }
+    console.log('Processing PDF directly...');
+    this.uploadPdfFile(file);
   }
 
   private uploadPdfFile(file: File) {
@@ -166,68 +159,6 @@ export class DashboardComponent {
           this.reportResult.isMockData = true;
           this.reportResult.apiMessage = errorMessage;
           this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status}`;
-          
-          this.isUploading = false;
-        },
-      });
-  }
-
-  private convertWordToPdfAndUpload(file: File) {
-    console.log('📄 Processing Word document...');
-    
-    // For Word documents, we'll send them to the same endpoint
-    // The backend can handle Word-to-PDF conversion server-side
-    // This is more reliable than client-side conversion
-    
-    const uploadUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
-    console.log('Uploading Word document to:', uploadUrl);
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    this.http.post<any>(uploadUrl, formData, {
-        reportProgress: true,
-        observe: 'events',
-        headers: {
-          'Accept': 'application/json'
-        }
-      })
-      .subscribe({
-        next: (event) => {
-          if (event.type === HttpEventType.UploadProgress) {
-            this.progress = Math.round(
-              (100 * event.loaded) / (event.total ?? 1),
-            );
-          } else if (event.type === HttpEventType.Response) {
-            const res = event as HttpResponse<any>;
-            console.log('✅ Word document processed:', res.body);
-            
-            // Process the response (should be converted to PDF analysis)
-            this.reportResult = this.processBackendResponse(res.body, file.name);
-            this.isUploading = false;
-          }
-        },
-        error: (err) => {
-          console.error('❌ Word Document Processing Error:', err);
-          
-          let errorMessage = 'Error processing Word document. Showing sample results.';
-          if (err.error && typeof err.error === 'object' && err.error.error) {
-            if (err.error.error.includes('Error processing PDF')) {
-              errorMessage = `Word document conversion failed. This may be due to:
-              • Corrupted or invalid Word document
-              • Password-protected document (not supported)
-              • Document contains unsupported features
-              • Backend conversion service limits
-              Please try a different Word document.`;
-            } else {
-              errorMessage = `Backend says: ${err.error.error}`;
-            }
-          }
-          
-          // Show Word document mock response
-          this.reportResult = this.getWordDocumentMockReport(file.name);
-          this.reportResult.isMockData = true;
-          this.reportResult.apiMessage = errorMessage;
           
           this.isUploading = false;
         },
@@ -512,282 +443,9 @@ export class DashboardComponent {
     };
   }
 
-  private getWordDocumentMockReport(fileName: string) {
-    // Create variation based on filename or random factors
-    const scenarios = [
-      {
-        successCount: 28,
-        failedCount: 2,
-        manualCheckCount: 2,
-        failures: [
-          { Rule: "Tagged content", Description: "All page content must be tagged so it can be read in the correct order by assistive technologies." },
-          { Rule: "Summary", Description: "Tables should include a summary to explain their purpose and structure to users with disabilities." }
-        ],
-        needsManualCheck: [
-          { Rule: "Logical Reading Order", Description: "The content must be structured so that it follows a natural and logical reading sequence." },
-          { Rule: "Color contrast", Description: "Text and visuals must have sufficient color contrast to be readable by users with visual impairments." }
-        ]
-      },
-      {
-        successCount: 25,
-        failedCount: 4,
-        manualCheckCount: 3,
-        failures: [
-          { Rule: "Alternative text", Description: "Images are missing alternative text descriptions for screen readers." },
-          { Rule: "Heading structure", Description: "Document has improper heading hierarchy that breaks navigation flow." },
-          { Rule: "Link descriptions", Description: "Hyperlinks use generic text like 'click here' instead of descriptive labels." },
-          { Rule: "Color dependency", Description: "Information is conveyed using color alone without additional indicators." }
-        ],
-        needsManualCheck: [
-          { Rule: "Table headers", Description: "Verify that table header cells are properly designated for screen readers." },
-          { Rule: "Document structure", Description: "Review document uses consistent styles rather than manual formatting." },
-          { Rule: "Reading flow", Description: "Check that content follows logical reading order with assistive technology." }
-        ]
-      },
-      {
-        successCount: 30,
-        failedCount: 1,
-        manualCheckCount: 1,
-        failures: [
-          { Rule: "Font embedding", Description: "Some fonts are not properly embedded which may cause display issues." }
-        ],
-        needsManualCheck: [
-          { Rule: "Form controls", Description: "Verify that form elements have appropriate labels and descriptions." }
-        ]
-      }
-    ];
 
-    // Select scenario based on filename hash or random
-    const fileHash = fileName.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
-    const scenarioIndex = Math.abs(fileHash) % scenarios.length;
-    const selectedScenario = scenarios[scenarioIndex];
 
-    return {
-      fileName: fileName,
-      fileType: 'Word Document',
-      summary: {
-        successCount: selectedScenario.successCount,
-        failedCount: selectedScenario.failedCount,
-        manualCheckCount: selectedScenario.manualCheckCount
-      },
-      results: [
-        {
-          rule: "Document Accessibility - Document Title",
-          status: "passed",
-          details: "Document has a descriptive title in document properties"
-        },
-        {
-          rule: "Document Accessibility - Document Language",
-          status: "passed",
-          details: "Document language is properly set to English (US)"
-        },
-        {
-          rule: "Document Accessibility - Tagged Structure",
-          status: "passed",
-          details: "Document is properly tagged for screen reader accessibility"
-        },
-        {
-          rule: "Document Accessibility - Heading Structure",
-          status: "passed",
-          details: "Proper heading hierarchy maintained throughout document (H1→H2→H3)"
-        },
-        {
-          rule: "Document Accessibility - Alternative Text for Images",
-          status: "passed",
-          details: "All images have descriptive alternative text for screen readers"
-        },
-        {
-          rule: "Document Accessibility - Table Headers",
-          status: "passed",
-          details: "All table headers are properly marked and accessible"
-        },
-        {
-          rule: "Document Accessibility - Link Text",
-          status: "passed",
-          details: "All hyperlinks have descriptive text and proper destinations"
-        },
-        {
-          rule: "Document Accessibility - Color Contrast",
-          status: "manual_check",
-          details: "Text and visuals must have sufficient color contrast to be readable by users with visual impairments."
-        },
-        {
-          rule: "Document Accessibility - Reading Order",
-          status: "manual_check",
-          details: "The content must be structured so that it follows a natural and logical reading sequence."
-        },
-        {
-          rule: "Document Accessibility - Form Fields",
-          status: "passed",
-          details: "All form fields have proper labels and descriptions"
-        },
-        {
-          rule: "Document Accessibility - Bookmarks",
-          status: "passed",
-          details: "Document includes navigation bookmarks for long content"
-        },
-        {
-          rule: "Document Accessibility - Text Spacing",
-          status: "passed",
-          details: "Line and paragraph spacing meets accessibility guidelines"
-        },
-        {
-          rule: "Document Accessibility - Font Embedding",
-          status: "passed",
-          details: "All fonts are properly embedded for consistent display"
-        },
-        {
-          rule: "Document Accessibility - Security Restrictions",
-          status: "passed",
-          details: "No security restrictions prevent assistive technology access"
-        },
-        {
-          rule: "Document Accessibility - Multimedia Content",
-          status: "passed",
-          details: "Video content includes proper captions and audio descriptions"
-        },
-        {
-          rule: "Document Accessibility - Annotations",
-          status: "passed",
-          details: "Comments and annotations are accessible to screen readers"
-        },
-        {
-          rule: "Document Accessibility - Lists Structure",
-          status: "passed",
-          details: "All lists use proper structure tags"
-        },
-        {
-          rule: "Document Accessibility - Content Flow",
-          status: "passed",
-          details: "Document content flows logically from top to bottom"
-        },
-        {
-          rule: "Document Accessibility - Interactive Elements",
-          status: "passed",
-          details: "All interactive elements are keyboard accessible"
-        },
-        {
-          rule: "Document Accessibility - Text Selection",
-          status: "passed",
-          details: "All text is selectable and readable by assistive technology"
-        },
-        {
-          rule: "Document Accessibility - Page Structure",
-          status: "passed",
-          details: "Pages have consistent structure and navigation aids"
-        },
-        {
-          rule: "Document Accessibility - Zoom Compatibility",
-          status: "passed",
-          details: "Content remains readable and functional at 200% zoom"
-        },
-        {
-          rule: "Document Accessibility - Metadata",
-          status: "passed",
-          details: "Document contains comprehensive accessibility metadata"
-        },
-        {
-          rule: "Document Accessibility - Color Information",
-          status: "passed",
-          details: "Information is not conveyed by color alone"
-        },
-        {
-          rule: "Document Accessibility - Focus Indicators",
-          status: "passed",
-          details: "Interactive elements have visible focus indicators"
-        },
-        {
-          rule: "Document Accessibility - Error Prevention",
-          status: "passed",
-          details: "Form validation provides clear error messages and suggestions"
-        },
-        {
-          rule: "Document Accessibility - Timing",
-          status: "passed",
-          details: "No time limits imposed on reading or interacting with content"
-        },
-        {
-          rule: "Document Accessibility - Motion Control",
-          status: "passed",
-          details: "Animation and motion can be paused or disabled by users"
-        },
-        {
-          rule: "Document Accessibility - Document Properties",
-          status: "passed",
-          details: "Document properties include title, author, subject, and keywords"
-        },
-        {
-          rule: "Document Accessibility - Compliance Standards",
-          status: "passed",
-          details: "Document meets accessibility standards"
-        },
-        // Dynamic results based on selected scenario
-        ...this.generateResultsForScenario(selectedScenario)
-      ],
-      failures: selectedScenario.failures,
-      needsManualCheck: selectedScenario.needsManualCheck
-    };
-  }
 
-  private generateResultsForScenario(scenario: any) {
-    const baseResults = [
-      { rule: "Document Accessibility - Document Title", status: "passed", details: "Document has a descriptive title in document properties" },
-      { rule: "Document Accessibility - Document Language", status: "passed", details: "Document language is properly set to English (US)" },
-      { rule: "Document Accessibility - Tagged Structure", status: "passed", details: "Document is properly tagged for screen reader accessibility" }
-    ];
-
-    // Add failed results based on scenario
-    scenario.failures.forEach((failure: any) => {
-      if (failure.Rule === "Tagged content") {
-        baseResults.push({ rule: "Document Accessibility - Tagged Content", status: "failed", details: failure.Description });
-      } else if (failure.Rule === "Summary") {
-        baseResults.push({ rule: "Document Accessibility - Summary", status: "failed", details: failure.Description });
-      } else if (failure.Rule === "Alternative text") {
-        baseResults.push({ rule: "Document Accessibility - Alternative Text", status: "failed", details: failure.Description });
-      } else if (failure.Rule === "Heading structure") {
-        baseResults.push({ rule: "Document Accessibility - Heading Structure", status: "failed", details: failure.Description });
-      } else if (failure.Rule === "Link descriptions") {
-        baseResults.push({ rule: "Document Accessibility - Link Text", status: "failed", details: failure.Description });
-      } else if (failure.Rule === "Color dependency") {
-        baseResults.push({ rule: "Document Accessibility - Color Information", status: "failed", details: failure.Description });
-      } else if (failure.Rule === "Font embedding") {
-        baseResults.push({ rule: "Document Accessibility - Font Embedding", status: "failed", details: failure.Description });
-      }
-    });
-
-    // Add manual check results based on scenario
-    scenario.needsManualCheck.forEach((check: any) => {
-      if (check.Rule === "Logical Reading Order") {
-        baseResults.push({ rule: "Document Accessibility - Reading Order", status: "manual_check", details: check.Description });
-      } else if (check.Rule === "Color contrast") {
-        baseResults.push({ rule: "Document Accessibility - Color Contrast", status: "manual_check", details: check.Description });
-      } else if (check.Rule === "Table headers") {
-        baseResults.push({ rule: "Document Accessibility - Table Headers", status: "manual_check", details: check.Description });
-      } else if (check.Rule === "Document structure") {
-        baseResults.push({ rule: "Document Accessibility - Document Structure", status: "manual_check", details: check.Description });
-      } else if (check.Rule === "Reading flow") {
-        baseResults.push({ rule: "Document Accessibility - Content Flow", status: "manual_check", details: check.Description });
-      } else if (check.Rule === "Form controls") {
-        baseResults.push({ rule: "Document Accessibility - Form Fields", status: "manual_check", details: check.Description });
-      }
-    });
-
-    // Fill remaining results as passed to reach the target count
-    const totalNeeded = scenario.successCount + scenario.failedCount + scenario.manualCheckCount;
-    const additionalPassed = [
-      { rule: "Document Accessibility - Text Spacing", status: "passed", details: "Line spacing and paragraph spacing meet accessibility guidelines" },
-      { rule: "Document Accessibility - Lists Structure", status: "passed", details: "All lists use proper structure tags" },
-      { rule: "Document Accessibility - Interactive Elements", status: "passed", details: "All interactive elements are keyboard accessible" },
-      { rule: "Document Accessibility - Zoom Compatibility", status: "passed", details: "Content remains readable and functional at 200% zoom" },
-      { rule: "Document Accessibility - Security Restrictions", status: "passed", details: "No security restrictions prevent assistive technology access" }
-    ];
-
-    while (baseResults.length < totalNeeded && additionalPassed.length > 0) {
-      baseResults.push(additionalPassed.shift()!);
-    }
-
-    return baseResults;
-  }
 
   private getPowerPointMockReport(fileName: string) {
     // Create variation based on filename for PowerPoint presentations
