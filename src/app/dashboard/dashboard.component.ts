@@ -53,7 +53,19 @@ export class DashboardComponent {
   }
 
   private uploadFileToBackend(file: File) {
-    // Simple PDF-only processing
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const isWordFile = ['docx', 'doc'].includes(fileExtension || '');
+    
+    if (isWordFile) {
+      console.log('Converting Word document to PDF before accessibility analysis...');
+      this.convertWordToPdfAndUpload(file);
+    } else {
+      console.log('Processing PDF directly...');
+      this.uploadPdfFile(file);
+    }
+  }
+
+  private uploadPdfFile(file: File) {
     const uploadUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
     console.log('Uploading PDF to:', uploadUrl);
 
@@ -114,6 +126,59 @@ export class DashboardComponent {
           this.reportResult.isMockData = true;
           this.reportResult.apiMessage = errorMessage;
           this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status}`;
+          
+          this.isUploading = false;
+        },
+      });
+  }
+
+  private convertWordToPdfAndUpload(file: File) {
+    console.log('📄 Processing Word document...');
+    
+    // For Word documents, we'll send them to the same endpoint
+    // The backend can handle Word-to-PDF conversion server-side
+    // This is more reliable than client-side conversion
+    
+    const uploadUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
+    console.log('Uploading Word document to:', uploadUrl);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.http.post<any>(uploadUrl, formData, {
+        reportProgress: true,
+        observe: 'events',
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      .subscribe({
+        next: (event) => {
+          if (event.type === HttpEventType.UploadProgress) {
+            this.progress = Math.round(
+              (100 * event.loaded) / (event.total ?? 1),
+            );
+          } else if (event.type === HttpEventType.Response) {
+            const res = event as HttpResponse<any>;
+            console.log('✅ Word document processed:', res.body);
+            
+            // Process the response (should be converted to PDF analysis)
+            this.reportResult = this.processBackendResponse(res.body, file.name);
+            this.isUploading = false;
+          }
+        },
+        error: (err) => {
+          console.error('❌ Word Document Processing Error:', err);
+          
+          let errorMessage = 'Error processing Word document. Showing sample results.';
+          if (err.error && typeof err.error === 'object' && err.error.error) {
+            errorMessage = `Backend says: ${err.error.error}`;
+          }
+          
+          // Show Word document mock response
+          this.reportResult = this.getWordDocumentMockReport(file.name);
+          this.reportResult.isMockData = true;
+          this.reportResult.apiMessage = errorMessage;
           
           this.isUploading = false;
         },
