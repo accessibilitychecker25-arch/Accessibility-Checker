@@ -39,34 +39,7 @@
       </div>
     </div>
 
-    <!-- Detailed Results -->
-    <div *ngIf="reportResult.results?.length" class="space-y-4">
-      <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Detailed Results</h4>
-      
-      <div *ngFor="let result of reportResult.results" class="border-l-4 p-4 rounded-r"
-           [ngClass]="{
-             'border-green-500 bg-green-50 dark:bg-green-900/20': result.status === 'passed',
-             'border-red-500 bg-red-50 dark:bg-red-900/20': result.status === 'failed',
-             'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20': result.status === 'manual_check'
-           }">
-        
-        <div class="flex items-center mb-2">
-          <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full mr-3"
-                [ngClass]="{
-                  'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200': result.status === 'passed',
-                  'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200': result.status === 'failed',
-                  'bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200': result.status === 'manual_check'
-                }">
-            {{ result.status === 'passed' ? 'PASSED' : result.status === 'failed' ? 'FAILED' : 'MANUAL CHECK' }}
-          </span>
-          <h5 class="font-medium text-gray-800 dark:text-gray-200">{{ result.rule }}</h5>
-        </div>
-        
-        <p class="text-sm text-gray-600 dark:text-gray-300">{{ result.details }}</p>
-      </div>
-    </div>
-
-    <!-- Legacy Results (for backward compatibility) -->
+    <!-- Grouped Results Only -->
     <div *ngIf="reportResult.failures?.length">
       <h4 class="font-medium text-red-600 mb-1">Failures</h4>
       <ul class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300">
