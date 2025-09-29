@@ -247,6 +247,26 @@ export class DashboardComponent {
           status: "failed",
           details: "Tables should include a summary to explain their purpose and structure to users with disabilities."
         }
+      ],
+      failures: [
+        {
+          Rule: "Tagged content",
+          Description: "All page content must be tagged so it can be read in the correct order by assistive technologies."
+        },
+        {
+          Rule: "Summary",
+          Description: "Tables should include a summary to explain their purpose and structure to users with disabilities."
+        }
+      ],
+      needsManualCheck: [
+        {
+          Rule: "Logical Reading Order",
+          Description: "The content must be structured so that it follows a natural and logical reading sequence."
+        },
+        {
+          Rule: "Color contrast",
+          Description: "Text and visuals must have sufficient color contrast to be readable by users with visual impairments."
+        }
       ]
     };
   }
@@ -288,8 +308,8 @@ export class DashboardComponent {
         },
         {
           rule: "Document Accessibility - Table Headers",
-          status: "manual_check",
-          details: "2 tables found - verify header cells are properly marked"
+          status: "passed",
+          details: "All table headers are properly marked and accessible"
         },
         {
           rule: "Document Accessibility - Link Text",
@@ -298,13 +318,13 @@ export class DashboardComponent {
         },
         {
           rule: "Document Accessibility - Color Contrast",
-          status: "passed",
-          details: "Text color contrast meets WCAG AA standards (4.5:1 or higher)"
+          status: "manual_check",
+          details: "Text and visuals must have sufficient color contrast to be readable by users with visual impairments."
         },
         {
           rule: "Document Accessibility - Reading Order",
           status: "manual_check",
-          details: "Complex layout detected - verify logical reading order with screen reader"
+          details: "The content must be structured so that it follows a natural and logical reading sequence."
         },
         {
           rule: "Document Accessibility - Form Fields",
@@ -420,6 +440,26 @@ export class DashboardComponent {
           rule: "Document Accessibility - Summary",
           status: "failed",
           details: "Tables should include a summary to explain their purpose and structure to users with disabilities."
+        }
+      ],
+      failures: [
+        {
+          Rule: "Tagged content",
+          Description: "All page content must be tagged so it can be read in the correct order by assistive technologies."
+        },
+        {
+          Rule: "Summary",
+          Description: "Tables should include a summary to explain their purpose and structure to users with disabilities."
+        }
+      ],
+      needsManualCheck: [
+        {
+          Rule: "Logical Reading Order",
+          Description: "The content must be structured so that it follows a natural and logical reading sequence."
+        },
+        {
+          Rule: "Color contrast",
+          Description: "Text and visuals must have sufficient color contrast to be readable by users with visual impairments."
         }
       ]
     };
