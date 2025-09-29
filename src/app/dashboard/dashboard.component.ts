@@ -63,15 +63,85 @@ export class DashboardComponent {
     let requestData: any;
     let requestHeaders: any = { 'Accept': 'application/json' };
 
-    // Let's try using FormData for Office files too, but send to the Office endpoint
-    // This might give us a more specific error about what the backend expects
-    requestData = new FormData();
-    requestData.append('file', file);
-    
     if (isOfficeFile) {
-      console.log('Sending Office file as FormData to /process-office-file endpoint');
+      // Office files need JSON with fileId in req.body
+      // Convert file to base64 and send as JSON
+      console.log('Processing Office file for JSON submission...');
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64Data = reader.result as string;
+        const base64Content = base64Data.split(',')[1]; // Remove data URL prefix
+        
+        // Create the exact JSON structure the backend expects
+        const requestBody = {
+          fileId: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for fileId
+          fileContent: base64Content,
+          fileName: file.name,
+          mimeType: file.type
+        };
+        
+        console.log('Sending Office file JSON:', { 
+          fileId: requestBody.fileId, 
+          fileName: requestBody.fileName, 
+          mimeType: requestBody.mimeType,
+          contentLength: requestBody.fileContent.length 
+        });
+        
+        // Send JSON request for Office files
+        this.http.post<any>(uploadUrl, requestBody, {
+          reportProgress: true,
+          observe: 'events',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        }).subscribe({
+          next: (event) => {
+            if (event.type === HttpEventType.UploadProgress) {
+              this.progress = Math.round((100 * event.loaded) / (event.total ?? 1));
+            } else if (event.type === HttpEventType.Response) {
+              const res = event as HttpResponse<any>;
+              console.log('✅ Office file API Response:', res.body);
+              this.reportResult = this.processBackendResponse(res.body, file.name);
+              this.isUploading = false;
+            }
+          },
+          error: (err) => {
+            console.error('❌ Office File Backend API Error:', err);
+            console.error('Error Status:', err.status);
+            console.error('Error Body:', err.error);
+            
+            let errorMessage = 'Backend error processing Office file. Showing demo results.';
+            let backendErrorDetails = '';
+            
+            if (err.error && typeof err.error === 'object' && err.error.error) {
+              backendErrorDetails = `Backend says: ${err.error.error}`;
+            }
+            
+            // Show appropriate mock response
+            const fileExtension = file.name.split('.').pop()?.toLowerCase();
+            if (fileExtension === 'docx' || fileExtension === 'doc') {
+              this.reportResult = this.getWordDocumentMockReport(file.name);
+            } else if (fileExtension === 'pptx' || fileExtension === 'ppt') {
+              this.reportResult = this.getPowerPointMockReport(file.name);
+            } else {
+              this.reportResult = this.getWordDocumentMockReport(file.name);
+            }
+            
+            this.reportResult.isMockData = true;
+            this.reportResult.apiMessage = errorMessage;
+            this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status}`;
+            this.isUploading = false;
+          }
+        });
+      };
+      reader.readAsDataURL(file);
+      return; // Exit early for Office files
     } else {
-      console.log('Sending PDF file as FormData to /upload-pdf endpoint');
+      // For PDFs, use FormData as before
+      requestData = new FormData();
+      requestData.append('file', file);
+      console.log('Sending PDF file as FormData');
     }
 
     this.http.post<any>(uploadUrl, requestData, {
