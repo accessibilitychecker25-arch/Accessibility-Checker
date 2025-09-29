@@ -64,23 +64,11 @@ export class DashboardComponent {
     let requestHeaders: any = { 'Accept': 'application/json' };
 
     if (isOfficeFile) {
-      // For Office files, the backend expects JSON with fileId, not file upload
-      // We need to convert the file to base64 or send it differently
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64Data = reader.result as string;
-        const fileData = {
-          fileId: file.name, // Use filename as fileId for now
-          fileName: file.name,
-          fileContent: base64Data.split(',')[1], // Remove data:mime;base64, prefix
-          fileSize: file.size,
-          fileType: fileExtension
-        };
-        
-        this.sendOfficeFileRequest(uploadUrl, fileData, file.name);
-      };
-      reader.readAsDataURL(file);
-      return; // Exit early for Office files, we'll handle the request in the callback
+      // Try multiple approaches for Office files
+      // First, let's try FormData with 'file' field (same as PDF)
+      requestData = new FormData();
+      requestData.append('file', file);
+      requestHeaders = { 'Accept': 'application/json' }; // Don't set Content-Type for FormData
     } else {
       // For PDFs, use FormData
       requestData = new FormData();
@@ -157,70 +145,7 @@ export class DashboardComponent {
       });
   }
 
-  private sendOfficeFileRequest(uploadUrl: string, fileData: any, fileName: string) {
-    this.http.post<any>(uploadUrl, fileData, {
-        reportProgress: true,
-        observe: 'events',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      })
-      .subscribe({
-        next: (event) => {
-          if (event.type === HttpEventType.UploadProgress) {
-            this.progress = Math.round(
-              (100 * event.loaded) / (event.total ?? 1),
-            );
-          } else if (event.type === HttpEventType.Response) {
-            const res = event as HttpResponse<any>;
-            console.log('✅ Real API Response received for Office file:', res.body);
-            
-            // Process the real API response
-            this.reportResult = this.processBackendResponse(res.body, fileName);
-            this.isUploading = false;
-          }
-        },
-        error: (err) => {
-          console.error('❌ Office File Backend API Error:', err);
-          console.error('Error Status:', err.status);
-          console.error('Error Message:', err.message);
-          console.error('Error Body:', err.error);
-          console.error('Error URL:', uploadUrl);
-          
-          let errorMessage = 'Backend error processing Office file. Showing demo results.';
-          let backendErrorDetails = '';
-          
-          // Try to get the actual backend error message
-          if (err.error && typeof err.error === 'object' && err.error.error) {
-            backendErrorDetails = `Backend says: ${err.error.error}`;
-          } else if (err.status === 413) {
-            errorMessage = `Office file too large. Backend has size limits. Showing demo results.`;
-            backendErrorDetails = 'Try a smaller file or compress the document before uploading.';
-          }
-          
-          console.log('Falling back to Office file mock response:', errorMessage);
-          console.log('Backend error details:', backendErrorDetails);
-          
-          // Determine file type for appropriate mock response
-          const fileExtension = fileName.split('.').pop()?.toLowerCase();
-          if (fileExtension === 'docx' || fileExtension === 'doc') {
-            this.reportResult = this.getWordDocumentMockReport(fileName);
-          } else if (fileExtension === 'pptx' || fileExtension === 'ppt') {
-            this.reportResult = this.getPowerPointMockReport(fileName);
-          } else {
-            this.reportResult = this.getWordDocumentMockReport(fileName); // Default to Word
-          }
-          
-          // Mark as mock data with detailed error info
-          this.reportResult.isMockData = true;
-          this.reportResult.apiMessage = errorMessage;
-          this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status} - ${err.statusText || 'Network Error'}`;
-          
-          this.isUploading = false;
-        },
-      });
-  }
+
 
   private processBackendResponse(response: any, fileName: string): any {
     console.log('Processing backend response:', response);
