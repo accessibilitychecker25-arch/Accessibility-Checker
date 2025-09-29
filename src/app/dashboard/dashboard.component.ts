@@ -55,6 +55,35 @@ export class DashboardComponent {
   private uploadFileToBackend(file: File) {
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     const isWordFile = ['docx', 'doc'].includes(fileExtension || '');
+    const isPdfFile = fileExtension === 'pdf';
+    
+    // Basic file validation
+    if (!isPdfFile && !isWordFile) {
+      console.error('❌ Unsupported file type:', fileExtension);
+      this.reportResult = {
+        fileName: file.name,
+        isError: true,
+        apiMessage: `Unsupported file type: .${fileExtension}. Please upload a PDF or Word document.`,
+        errorDetails: 'Only PDF (.pdf) and Word (.doc, .docx) files are supported.'
+      };
+      this.isUploading = false;
+      return;
+    }
+    
+    // Check for empty file
+    if (file.size === 0) {
+      console.error('❌ Empty file detected');
+      this.reportResult = {
+        fileName: file.name,
+        isError: true,
+        apiMessage: 'Empty file detected. Please select a valid document.',
+        errorDetails: 'File size is 0 bytes.'
+      };
+      this.isUploading = false;
+      return;
+    }
+    
+    console.log(`📄 File validation passed: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
     
     if (isWordFile) {
       console.log('Converting Word document to PDF before accessibility analysis...');
@@ -107,7 +136,18 @@ export class DashboardComponent {
           // Try to get the actual backend error message
           if (err.error && typeof err.error === 'object' && err.error.error) {
             backendErrorDetails = `Backend says: ${err.error.error}`;
-            errorMessage = `Backend error processing PDF file. Showing demo results.`;
+            
+            // Provide more specific error messages based on backend response
+            if (err.error.error.includes('Error processing PDF')) {
+              errorMessage = `PDF file could not be processed. This may be due to:
+              • File corruption or invalid PDF format
+              • Password-protected PDF (not supported)
+              • Scanned PDF without text content
+              • Adobe PDF API processing limits
+              Please try a different PDF file.`;
+            } else {
+              errorMessage = `Backend error processing PDF file. Showing demo results.`;
+            }
           } else if (err.status === 413) {
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
             errorMessage = `File too large (${fileSizeMB}MB). Try a smaller PDF file.`;
@@ -172,7 +212,16 @@ export class DashboardComponent {
           
           let errorMessage = 'Error processing Word document. Showing sample results.';
           if (err.error && typeof err.error === 'object' && err.error.error) {
-            errorMessage = `Backend says: ${err.error.error}`;
+            if (err.error.error.includes('Error processing PDF')) {
+              errorMessage = `Word document conversion failed. This may be due to:
+              • Corrupted or invalid Word document
+              • Password-protected document (not supported)
+              • Document contains unsupported features
+              • Backend conversion service limits
+              Please try a different Word document.`;
+            } else {
+              errorMessage = `Backend says: ${err.error.error}`;
+            }
           }
           
           // Show Word document mock response
