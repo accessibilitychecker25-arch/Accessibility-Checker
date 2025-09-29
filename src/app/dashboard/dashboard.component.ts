@@ -50,9 +50,12 @@ export class DashboardComponent {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Use the new backend URL with upload endpoint
-    const uploadUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
-    console.log('Uploading to:', uploadUrl);
+    // Determine which endpoint to use based on file type
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const isOfficeFile = ['docx', 'doc', 'pptx', 'ppt'].includes(fileExtension || '');
+    const endpoint = isOfficeFile ? environment.officeEndpoint : environment.uploadEndpoint;
+    const uploadUrl = `${environment.apiUrl}${endpoint}`;
+    console.log(`Uploading ${fileExtension} file to:`, uploadUrl);
 
     this.http.post<any>(uploadUrl, formData, {
         reportProgress: true,
