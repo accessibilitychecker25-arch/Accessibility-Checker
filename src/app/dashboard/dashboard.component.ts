@@ -64,11 +64,75 @@ export class DashboardComponent {
     let requestHeaders: any = { 'Accept': 'application/json' };
 
     if (isOfficeFile) {
-      // Try multiple approaches for Office files
-      // First, let's try FormData with 'file' field (same as PDF)
-      requestData = new FormData();
-      requestData.append('file', file);
-      requestHeaders = { 'Accept': 'application/json' }; // Don't set Content-Type for FormData
+      // Office files need JSON with fileId - let's try a simpler approach
+      // Convert file to base64 and send as JSON
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64Data = reader.result as string;
+        // Try different JSON structures the backend might expect
+        const fileData = {
+          fileId: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for fileId
+          fileName: file.name,
+          fileData: base64Data, // Include full data URL
+          mimeType: file.type
+        };
+        
+        console.log('Sending Office file data:', { fileId: fileData.fileId, fileName: fileData.fileName, mimeType: fileData.mimeType });
+        
+        // Send JSON request for Office files
+        this.http.post<any>(uploadUrl, fileData, {
+          reportProgress: true,
+          observe: 'events',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        }).subscribe({
+          next: (event) => {
+            if (event.type === HttpEventType.UploadProgress) {
+              this.progress = Math.round((100 * event.loaded) / (event.total ?? 1));
+            } else if (event.type === HttpEventType.Response) {
+              const res = event as HttpResponse<any>;
+              console.log('✅ Office file API Response:', res.body);
+              this.reportResult = this.processBackendResponse(res.body, file.name);
+              this.isUploading = false;
+            }
+          },
+          error: (err) => {
+            console.error('❌ Office File Backend API Error:', err);
+            console.error('Error Status:', err.status);
+            console.error('Error Body:', err.error);
+            
+            let errorMessage = 'Backend error processing Office file. Showing demo results.';
+            let backendErrorDetails = '';
+            
+            if (err.error && typeof err.error === 'object' && err.error.error) {
+              backendErrorDetails = `Backend says: ${err.error.error}`;
+            } else if (err.status === 413) {
+              const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+              errorMessage = `Office file too large (${fileSizeMB}MB). Showing demo results.`;
+              backendErrorDetails = 'Try a smaller file or compress the document.';
+            }
+            
+            // Show appropriate mock response
+            const fileExtension = file.name.split('.').pop()?.toLowerCase();
+            if (fileExtension === 'docx' || fileExtension === 'doc') {
+              this.reportResult = this.getWordDocumentMockReport(file.name);
+            } else if (fileExtension === 'pptx' || fileExtension === 'ppt') {
+              this.reportResult = this.getPowerPointMockReport(file.name);
+            } else {
+              this.reportResult = this.getWordDocumentMockReport(file.name);
+            }
+            
+            this.reportResult.isMockData = true;
+            this.reportResult.apiMessage = errorMessage;
+            this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status} - ${err.statusText || 'Network Error'}`;
+            this.isUploading = false;
+          }
+        });
+      };
+      reader.readAsDataURL(file);
+      return; // Exit early for Office files
     } else {
       // For PDFs, use FormData
       requestData = new FormData();
