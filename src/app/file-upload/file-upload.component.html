@@ -4,7 +4,7 @@
     <input
       type="file"
       id="fileInput"
-      accept=".pdf"
+      accept=".pdf,.doc,.docx"
       (change)="onFileSelected($event)"
       class="hidden"
     />
@@ -28,6 +28,6 @@
   
   <!-- Supported file types info -->
   <p class="text-xs text-gray-600 dark:text-gray-400">
-    Supported formats: PDF files only
+    Supported formats: PDF and Word documents (.pdf, .doc, .docx)
   </p>
 </div>
