@@ -1,7 +1,7 @@
 export const environment = { 
   production: false, 
-  // Updated backend URL
-  apiUrl: 'https://accessibility-checker-2sj3m9idk-kates-projects-e59a7a1b.vercel.app',
+  // Updated backend URL - NEW DEPLOYMENT
+  apiUrl: 'https://accessibility-checker-5kashuy08-kates-projects-e59a7a1b.vercel.app',
   // API endpoints
   uploadEndpoint: '/upload-pdf',
   officeEndpoint: '/process-office-file',
