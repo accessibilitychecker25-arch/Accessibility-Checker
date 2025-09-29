@@ -318,8 +318,8 @@ export class DashboardComponent {
         },
         {
           rule: "Word Accessibility - Content Controls",
-          status: "passed",
-          details: "Form elements have proper labels and accessibility properties"
+          status: "manual_check",
+          details: "Form elements found - verify labels and accessibility properties"
         },
         {
           rule: "Word Accessibility - Text Spacing",
