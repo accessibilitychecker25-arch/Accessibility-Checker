@@ -47,9 +47,6 @@ export class DashboardComponent {
   }
 
   private uploadFileToBackend(file: File) {
-    const formData = new FormData();
-    formData.append('file', file);
-
     // Determine which endpoint to use based on file type
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     const isOfficeFile = ['docx', 'doc', 'pptx', 'ppt'].includes(fileExtension || '');
@@ -57,13 +54,24 @@ export class DashboardComponent {
     const uploadUrl = `${environment.apiUrl}${endpoint}`;
     console.log(`Uploading ${fileExtension} file to:`, uploadUrl);
 
-    this.http.post<any>(uploadUrl, formData, {
+    let requestData: any;
+    let requestHeaders: any = { 'Accept': 'application/json' };
+
+    if (isOfficeFile) {
+      // For Office files, the backend might expect different format
+      // Let's try sending as FormData first, but we may need to adjust
+      requestData = new FormData();
+      requestData.append('file', file);
+    } else {
+      // For PDFs, use FormData
+      requestData = new FormData();
+      requestData.append('file', file);
+    }
+
+    this.http.post<any>(uploadUrl, requestData, {
         reportProgress: true,
         observe: 'events',
-        headers: {
-          'Accept': 'application/json'
-          // Don't set Content-Type - let browser set it for FormData with boundary
-        }
+        headers: requestHeaders
       })
       .subscribe({
         next: (event) => {
@@ -84,11 +92,17 @@ export class DashboardComponent {
           console.error('❌ Backend API Error:', err);
           console.error('Error Status:', err.status);
           console.error('Error Message:', err.message);
+          console.error('Error Body:', err.error);
           console.error('Error URL:', uploadUrl);
           
           let errorMessage = 'Backend temporarily unavailable. Showing sample results.';
+          let backendErrorDetails = '';
           
-          if (err.status === 404) {
+          // Try to get the actual backend error message
+          if (err.error && typeof err.error === 'object' && err.error.error) {
+            backendErrorDetails = `Backend says: ${err.error.error}`;
+            errorMessage = `Backend error processing ${isOfficeFile ? 'Office' : 'PDF'} file. Showing demo results.`;
+          } else if (err.status === 404) {
             errorMessage = 'API endpoint not found. Backend may need configuration. Showing demo results.';
           } else if (err.status === 0) {
             errorMessage = 'Cannot connect to backend server. Showing demo results.';
@@ -97,6 +111,7 @@ export class DashboardComponent {
           }
           
           console.log('Falling back to mock response:', errorMessage);
+          console.log('Backend error details:', backendErrorDetails);
           
           // Provide different mock responses based on file type
           const fileExtension = file.name.split('.').pop()?.toLowerCase();
@@ -112,7 +127,7 @@ export class DashboardComponent {
           // Mark as mock data with detailed error info
           this.reportResult.isMockData = true;
           this.reportResult.apiMessage = errorMessage;
-          this.reportResult.errorDetails = `Status: ${err.status} - ${err.statusText || 'Network Error'}`;
+          this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status} - ${err.statusText || 'Network Error'}`;
           
           this.isUploading = false;
         },
