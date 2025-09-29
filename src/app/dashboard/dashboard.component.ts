@@ -32,6 +32,12 @@ export class DashboardComponent {
     this.progress = 0;
     this.isUploading = true;
 
+    // Check file size (warn if over 10MB, which is common backend limit)
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB > 10) {
+      console.warn(`⚠️ Large file detected: ${fileSizeMB.toFixed(1)}MB - may exceed backend limits`);
+    }
+
     // First test basic connectivity
     console.log('Testing backend connectivity...');
     this.http.get(`${environment.apiUrl}`).subscribe({
@@ -115,6 +121,10 @@ export class DashboardComponent {
           if (err.error && typeof err.error === 'object' && err.error.error) {
             backendErrorDetails = `Backend says: ${err.error.error}`;
             errorMessage = `Backend error processing ${isOfficeFile ? 'Office' : 'PDF'} file. Showing demo results.`;
+          } else if (err.status === 413) {
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+            errorMessage = `File too large (${fileSizeMB}MB). Backend has size limits. Showing demo results.`;
+            backendErrorDetails = 'Try a smaller file or compress the document before uploading.';
           } else if (err.status === 404) {
             errorMessage = 'API endpoint not found. Backend may need configuration. Showing demo results.';
           } else if (err.status === 0) {
@@ -184,6 +194,9 @@ export class DashboardComponent {
           // Try to get the actual backend error message
           if (err.error && typeof err.error === 'object' && err.error.error) {
             backendErrorDetails = `Backend says: ${err.error.error}`;
+          } else if (err.status === 413) {
+            errorMessage = `Office file too large. Backend has size limits. Showing demo results.`;
+            backendErrorDetails = 'Try a smaller file or compress the document before uploading.';
           }
           
           console.log('Falling back to Office file mock response:', errorMessage);
