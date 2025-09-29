@@ -82,35 +82,90 @@ export class DashboardComponent {
       fileName: fileName,
       fileType: 'PDF',
       summary: {
-        successCount: 28,
-        failedCount: 3,
-        manualCheckCount: 2
+        successCount: 22,
+        failedCount: 4,
+        manualCheckCount: 3
       },
       results: [
         {
-          rule: "WCAG 2.1 AA - Images must have alt text",
+          rule: "PDF Accessibility - Document Title",
           status: "passed",
-          details: "All images have appropriate alternative text"
+          details: "PDF document has a descriptive title in document properties"
         },
         {
-          rule: "WCAG 2.1 AA - Text must have sufficient color contrast",
-          status: "failed", 
-          details: "Found 3 instances of insufficient color contrast (ratio 3.2:1, requires 4.5:1)"
-        },
-        {
-          rule: "WCAG 2.1 AA - Headings must be properly structured",
+          rule: "PDF Accessibility - Document Language",
           status: "passed",
-          details: "Heading hierarchy is logical and sequential"
+          details: "Document language is properly set to English (US)"
         },
         {
-          rule: "WCAG 2.1 AA - Tables must have headers",
+          rule: "PDF Accessibility - Tagged PDF Structure",
+          status: "passed",
+          details: "Document is properly tagged for screen reader accessibility"
+        },
+        {
+          rule: "PDF Accessibility - Heading Structure",
+          status: "failed",
+          details: "Heading hierarchy is broken - H3 found without preceding H2"
+        },
+        {
+          rule: "PDF Accessibility - Alternative Text for Images",
+          status: "failed",
+          details: "3 images found without alternative text descriptions"
+        },
+        {
+          rule: "PDF Accessibility - Table Headers",
           status: "manual_check",
-          details: "2 tables found - manual review needed to verify header associations"
+          details: "2 tables found - verify header cells are properly marked"
         },
         {
-          rule: "WCAG 2.1 AA - Links must have descriptive text",
-          status: "passed", 
-          details: "All links have meaningful text or aria-labels"
+          rule: "PDF Accessibility - Link Text",
+          status: "passed",
+          details: "All hyperlinks have descriptive text and proper destinations"
+        },
+        {
+          rule: "PDF Accessibility - Color Contrast",
+          status: "failed",
+          details: "Text color contrast insufficient (3.2:1, requires 4.5:1 for WCAG AA)"
+        },
+        {
+          rule: "PDF Accessibility - Reading Order",
+          status: "manual_check",
+          details: "Complex layout detected - verify logical reading order with screen reader"
+        },
+        {
+          rule: "PDF Accessibility - Form Fields",
+          status: "passed",
+          details: "All form fields have proper labels and descriptions"
+        },
+        {
+          rule: "PDF Accessibility - Bookmarks",
+          status: "passed",
+          details: "Document includes navigation bookmarks for long content"
+        },
+        {
+          rule: "PDF Accessibility - Text Spacing",
+          status: "passed",
+          details: "Line and paragraph spacing meets accessibility guidelines"
+        },
+        {
+          rule: "PDF Accessibility - Font Embedding",
+          status: "passed",
+          details: "All fonts are properly embedded for consistent display"
+        },
+        {
+          rule: "PDF Accessibility - Security Restrictions",
+          status: "passed",
+          details: "No security restrictions prevent assistive technology access"
+        },
+        {
+          rule: "PDF Accessibility - Multimedia Content",
+          status: "failed",
+          details: "Video content lacks captions and audio descriptions"
+        },
+        {
+          rule: "PDF Accessibility - Annotations",
+          status: "manual_check",
+          details: "Comments and annotations found - verify accessibility for screen readers"
         }
       ]
     };
