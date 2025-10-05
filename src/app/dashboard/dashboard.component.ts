@@ -33,14 +33,7 @@ export class DashboardComponent {
     const file = payload.file;
     const title = payload.title?.trim();
 
-    // Now expecting an object with file and title
-  handleFile(payload: { file: File; title: string }) {
-    const file = payload.file;
-    const title = payload.title?.trim();
-
-    console.log('Uploading file:', file.name, 'with title:', title);
-
-    this.progress = 0;
+    console.log('Uploading file:', file.name, 'with title:', title);    this.progress = 0;
     this.isUploading = true;
 
     // Require title client-side
