@@ -17,7 +17,7 @@
       {{ selectedFile ? selectedFile.name : "Choose File" }}
     </label>
 
-    <!-- Process button with filename and title validation -->
+    <!-- Process button with filename validation -->
     <button
       class="text-sm px-3 py-1 rounded transition"
       [class.bg-blue-600]="isFormValid()"
@@ -46,19 +46,6 @@
         <strong>Suggested name:</strong> {{ getSuggestedFilename() }}
       </p>
     </div>
-  </div>
-  
-  <!-- Title input optional for .docx files -->
-  <div class="mt-2">
-    <label class="text-xs text-gray-600 dark:text-gray-400 block mb-1">Document Title (optional)</label>
-    <input
-      type="text"
-      (input)="title = $any($event.target).value"
-      placeholder="Enter document title (optional)"
-      class="w-full px-2 py-1 border rounded text-sm"
-      [value]="title"
-    />
-    <p class="text-xs text-gray-500 mt-1">Adding a title helps with document organization.</p>
   </div>
   
   <!-- Supported file types info -->
