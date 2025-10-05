@@ -28,8 +28,12 @@ export class DashboardComponent {
 
   constructor(private http: HttpClient) {}
 
-  handleFile(file: File) {
-    this.progress = 0;
+  // Now expecting an object with file and title
+  handleFile(payload: { file: File; title: string }) {
+    const file = payload.file;
+    const title = payload.title?.trim();
+
+    console.log('Uploading file:', file.name, 'with title:', title);    this.progress = 0;
     this.isUploading = true;
 
     // Check file size (warn if over 10MB, which is common backend limit)
@@ -43,27 +47,27 @@ export class DashboardComponent {
     this.http.get(`${environment.apiUrl}`).subscribe({
       next: (response) => {
         console.log('✅ Backend is accessible:', response);
-        this.uploadFileToBackend(file);
+        this.uploadFileToBackend(file, title);
       },
       error: (err) => {
         console.error('❌ Backend connectivity test failed:', err);
-        this.uploadFileToBackend(file); // Try upload anyway
+        this.uploadFileToBackend(file, title); // Try upload anyway
       }
     });
   }
 
-  private uploadFileToBackend(file: File) {
+  private uploadFileToBackend(file: File, title?: string) {
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    const isPdfFile = fileExtension === 'pdf';
-    
-    // Basic file validation
-    if (!isPdfFile) {
+    const isDocxFile = fileExtension === 'docx';
+
+    // Basic file validation - only allow .docx
+    if (!isDocxFile) {
       console.error('❌ Unsupported file type:', fileExtension);
       this.reportResult = {
         fileName: file.name,
         isError: true,
-        apiMessage: `Unsupported file type: .${fileExtension}. Please upload a PDF document.`,
-        errorDetails: 'Only PDF (.pdf) files are supported.'
+        apiMessage: `Unsupported file type: .${fileExtension}. Please upload a Word document (.docx).`,
+        errorDetails: 'Only Word Documents (.docx) are supported.'
       };
       this.isUploading = false;
       return;
@@ -75,7 +79,7 @@ export class DashboardComponent {
       this.reportResult = {
         fileName: file.name,
         isError: true,
-        apiMessage: 'Empty file detected. Please select a valid PDF document.',
+        apiMessage: 'Empty file detected. Please select a valid document.',
         errorDetails: 'File size is 0 bytes.'
       };
       this.isUploading = false;
@@ -83,16 +87,55 @@ export class DashboardComponent {
     }
     
     console.log(`📄 File validation passed: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-    console.log('Processing PDF directly...');
-    this.uploadPdfFile(file);
+    console.log('Processing DOCX upload...');
+    this.uploadDocxFile(file, title ?? '');
   }
 
   private uploadPdfFile(file: File) {
-    const uploadUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
+    const uploadUrl = environment.apiUrl;
     console.log('Uploading PDF to:', uploadUrl);
 
     const formData = new FormData();
     formData.append('file', file);
+
+    // Reset state
+    this.reportResult = null;
+    this.isUploading = true;
+    this.progress = 0;
+
+    this.http
+      .post(API_URL, formData, {
+        observe: 'events',
+        reportProgress: true,
+      })
+      .subscribe({
+        next: (event: HttpEvent<any>) => {
+          if (event.type === HttpEventType.UploadProgress) {
+            this.progress = Math.round(
+              (100 * event.loaded) / (event.total ?? 1),
+            );
+          } else if (event.type === HttpEventType.Response) {
+            const res = event as HttpResponse<any>;
+            this.reportResult = res.body; // JSON result
+            console.log('Report result:', this.reportResult);
+            this.isUploading = false;
+          }
+        },
+        error: (err) => {
+          console.error('Upload error:', err);
+          this.isUploading = false;
+        },
+      });
+  }
+  // New upload method for .docx which includes the title in the multipart form
+  private uploadDocxFile(file: File, title: string) {
+    const uploadUrl = environment.apiUrl;
+    console.log('Uploading DOCX to:', uploadUrl);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    // Include the provided title so backend can check metadata or store it
+    formData.append('title', title);
 
     this.http.post<any>(uploadUrl, formData, {
         reportProgress: true,
@@ -118,49 +161,70 @@ export class DashboardComponent {
         },
         error: (err) => {
           console.error('❌ Backend API Error:', err);
-          console.error('Error Status:', err.status);
-          console.error('Error Message:', err.message);
-          console.error('Error Body:', err.error);
-          console.error('Error URL:', uploadUrl);
+          this.isUploading = false;
           
-          let errorMessage = 'Backend temporarily unavailable. Showing sample results.';
-          let backendErrorDetails = '';
-          
-          // Try to get the actual backend error message
-          if (err.error && typeof err.error === 'object' && err.error.error) {
-            backendErrorDetails = `Backend says: ${err.error.error}`;
-            
-            // Provide more specific error messages based on backend response
-            if (err.error.error.includes('Error processing PDF')) {
-              errorMessage = `PDF file could not be processed. This may be due to:
-              • File corruption or invalid PDF format
-              • Password-protected PDF (not supported)
-              • Scanned PDF without text content
-              • Adobe PDF API processing limits
-              Please try a different PDF file.`;
-            } else {
-              errorMessage = `Backend error processing PDF file. Showing demo results.`;
+          // Handle specific validation errors from backend
+          if (err.status === 400 && err.error) {
+            if (err.error.error === 'Filename does not meet accessibility standards') {
+              // Handle filename validation error
+              this.reportResult = {
+                fileName: file.name,
+                isError: true,
+                isFilenameError: true,
+                apiMessage: 'Filename Accessibility Issues Detected',
+                errorDetails: err.error.details,
+                accessibilityGuidance: err.error.accessibilityGuidance,
+                backendValidation: true
+              };
+              return;
+            } else if (err.error.error === 'Invalid file type') {
+              // Handle file type validation error
+              this.reportResult = {
+                fileName: file.name,
+                isError: true,
+                apiMessage: 'Invalid File Type',
+                errorDetails: err.error.details.message,
+                backendValidation: true
+              };
+              return;
+            } else if (err.error.error === 'Document title is required') {
+              // Handle missing title error
+              this.reportResult = {
+                fileName: file.name,
+                isError: true,
+                apiMessage: 'Document Title Required',
+                errorDetails: err.error.details.message,
+                accessibilityNote: err.error.details.accessibilityNote,
+                backendValidation: true
+              };
+              return;
             }
-          } else if (err.status === 413) {
-            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-            errorMessage = `File too large (${fileSizeMB}MB). Try a smaller PDF file.`;
-          } else if (err.status === 404) {
-            errorMessage = 'PDF processing service not found.';
-          } else if (err.status === 0) {
-            errorMessage = 'Cannot connect to PDF processing service.';
           }
           
-          console.log('Falling back to PDF mock response:', errorMessage);
-          
-          // Show PDF mock response
+          // Handle other errors with fallback responses
+          let errorMessage = 'Backend temporarily unavailable. Showing sample results.';
+          let backendErrorDetails = '';
+
+          if (err.error && typeof err.error === 'object' && err.error.error) {
+            backendErrorDetails = `Backend says: ${err.error.error}`;
+            errorMessage = `Backend error processing document. Showing demo results.`;
+          } else if (err.status === 413) {
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+            errorMessage = `File too large (${fileSizeMB}MB). Try a smaller document.`;
+          } else if (err.status === 404) {
+            errorMessage = 'Document processing service not found.';
+          } else if (err.status === 0) {
+            errorMessage = 'Cannot connect to document processing service.';
+          }
+
+          console.log('Falling back to document mock response:', errorMessage);
+
+          // Show a generic mock response (reuse PDF mock but change fileType)
           this.reportResult = this.getPdfMockReport(file.name);
-          
-          // Mark as mock data
+          this.reportResult.fileType = 'Word Document (.docx)';
           this.reportResult.isMockData = true;
           this.reportResult.apiMessage = errorMessage;
           this.reportResult.errorDetails = backendErrorDetails || `Status: ${err.status}`;
-          
-          this.isUploading = false;
         },
       });
   }

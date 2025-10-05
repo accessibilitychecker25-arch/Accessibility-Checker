@@ -1,10 +1,10 @@
 <div class="space-y-3">
   <div class="flex items-center space-x-2">
-    <!-- Hidden native input -->
+    <!-- Hidden native input - only allow .docx files -->
     <input
       type="file"
       id="fileInput"
-      accept=".pdf"
+      accept=".docx"
       (change)="onFileSelected($event)"
       class="hidden"
     />
@@ -17,17 +17,39 @@
       {{ selectedFile ? selectedFile.name : "Choose File" }}
     </label>
 
-    <!-- Your existing Upload button -->
+    <!-- Process button with filename validation -->
     <button
-      class="text-sm px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+      class="text-sm px-3 py-1 rounded transition"
+      [class.bg-blue-600]="isFormValid()"
+      [class.text-white]="isFormValid()"
+      [class.hover:bg-blue-700]="isFormValid()"
+      [class.bg-gray-400]="!isFormValid()"
+      [class.text-gray-600]="!isFormValid()"
+      [class.cursor-not-allowed]="!isFormValid()"
       (click)="submit()"
+      [disabled]="!isFormValid()"
     >
       Process
     </button>
   </div>
   
+  <!-- Filename validation feedback -->
+  <div [hidden]="!selectedFile || isFileNameValid()" class="mt-2">
+    <div class="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
+      <p class="text-yellow-800 font-medium mb-1">📝 Filename Accessibility Issues:</p>
+      <ul class="text-yellow-700 text-xs space-y-1">
+        <li [hidden]="!hasGenericName()">• Filename appears generic (like "document1" or "untitled"). Use a descriptive name.</li>
+        <li [hidden]="!hasUnderscores()">• Underscores will be replaced with hyphens for better accessibility.</li>
+        <li [hidden]="isDescriptive()">• Use a more descriptive filename that explains the document's content.</li>
+      </ul>
+      <p class="text-yellow-700 text-xs mt-2">
+        <strong>Suggested name:</strong> {{ getSuggestedFilename() }}
+      </p>
+    </div>
+  </div>
+  
   <!-- Supported file types info -->
   <p class="text-xs text-gray-600 dark:text-gray-400">
-    Supported formats: PDF documents only (.pdf)
+    Supported formats: Word Document (.docx) only
   </p>
 </div>

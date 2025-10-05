@@ -17,53 +17,90 @@
 <div class="mt-6 w-full" *ngIf="reportResult">
   <div class="w-full p-4 bg-gray-100 dark:bg-gray-800 rounded shadow">
     <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-      Accessibility Report - {{ reportResult.fileType || 'Document' }}
-      <span *ngIf="reportResult.isRealData" class="ml-2 inline-block px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200">
-        ✅ Real Analysis
-      </span>
-      <span *ngIf="reportResult.isMockData" class="ml-2 inline-block px-2 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
-        📝 Demo Data
-      </span>
+      Accessibility Report ({{ reportResult.fileName }})
     </h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-      <strong>File:</strong> {{ reportResult.fileName }}
-    </p>
-    <p *ngIf="reportResult.apiMessage" class="text-sm text-blue-600 dark:text-blue-400 mb-2 italic">
-      ℹ️ {{ reportResult.apiMessage }}
-    </p>
-    <p *ngIf="reportResult.errorDetails" class="text-xs text-gray-500 dark:text-gray-400 mb-4 font-mono bg-gray-50 dark:bg-gray-700 p-2 rounded">
-      🔧 {{ reportResult.errorDetails }}
-    </p>
 
-    <!-- Summary -->
-    <div class="grid grid-cols-3 gap-4 mb-6">
-      <div class="bg-green-100 dark:bg-green-900/30 p-3 rounded text-center">
-        <div class="text-2xl font-bold text-green-700 dark:text-green-400">{{ reportResult.summary.successCount }}</div>
-        <div class="text-sm text-green-600 dark:text-green-300">Passed</div>
+    <!-- Backend Filename Validation Errors -->
+    <div *ngIf="reportResult.isFilenameError" class="mb-4 p-4 bg-red-50 border border-red-200 rounded">
+      <h4 class="text-red-800 font-medium mb-2">🚫 Filename Accessibility Issues</h4>
+      <p class="text-red-700 text-sm mb-3">{{ reportResult.apiMessage }}</p>
+      
+      <div *ngIf="reportResult.errorDetails?.errors?.length" class="mb-3">
+        <h5 class="text-red-700 font-medium text-sm mb-1">Errors:</h5>
+        <ul class="list-disc list-inside text-red-600 text-xs space-y-1">
+          <li *ngFor="let error of reportResult.errorDetails.errors">{{ error }}</li>
+        </ul>
       </div>
-      <div class="bg-red-100 dark:bg-red-900/30 p-3 rounded text-center">
-        <div class="text-2xl font-bold text-red-700 dark:text-red-400">{{ reportResult.summary.failedCount }}</div>
-        <div class="text-sm text-red-600 dark:text-red-300">Failed</div>
+      
+      <div *ngIf="reportResult.errorDetails?.warnings?.length" class="mb-3">
+        <h5 class="text-yellow-700 font-medium text-sm mb-1">Warnings:</h5>
+        <ul class="list-disc list-inside text-yellow-600 text-xs space-y-1">
+          <li *ngFor="let warning of reportResult.errorDetails.warnings">{{ warning }}</li>
+        </ul>
       </div>
-      <div class="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded text-center">
-        <div class="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{{ reportResult.summary.manualCheckCount }}</div>
-        <div class="text-sm text-yellow-600 dark:text-yellow-300">Manual Check</div>
+      
+      <div *ngIf="reportResult.errorDetails?.suggestedFilename" class="mb-3">
+        <p class="text-red-700 text-sm">
+          <strong>Suggested filename:</strong> 
+          <code class="bg-red-100 px-1 rounded text-red-800">{{ reportResult.errorDetails.suggestedFilename }}</code>
+        </p>
+      </div>
+      
+      <div *ngIf="reportResult.accessibilityGuidance" class="bg-blue-50 border border-blue-200 rounded p-3 mt-3">
+        <h5 class="text-blue-800 font-medium text-sm mb-2">📋 Accessibility Guidelines</h5>
+        <p class="text-blue-700 text-xs mb-2">
+          <strong>Section 508:</strong> {{ reportResult.accessibilityGuidance.section508 }}
+        </p>
+        <p class="text-blue-700 text-xs mb-2">
+          <strong>WebAIM:</strong> {{ reportResult.accessibilityGuidance.webAIM }}
+        </p>
+        <div *ngIf="reportResult.accessibilityGuidance.recommendations?.length">
+          <p class="text-blue-700 text-xs font-medium mb-1">Recommendations:</p>
+          <ul class="list-disc list-inside text-blue-600 text-xs space-y-1">
+            <li *ngFor="let rec of reportResult.accessibilityGuidance.recommendations">{{ rec }}</li>
+          </ul>
+        </div>
       </div>
     </div>
 
-    <!-- Grouped Results Only -->
-    <div *ngIf="reportResult.failures?.length">
+    <!-- Other Backend Validation Errors -->
+    <div *ngIf="reportResult.isError && !reportResult.isFilenameError && reportResult.backendValidation" 
+         class="mb-4 p-4 bg-red-50 border border-red-200 rounded">
+      <h4 class="text-red-800 font-medium mb-2">🚫 {{ reportResult.apiMessage }}</h4>
+      <p class="text-red-700 text-sm">{{ reportResult.errorDetails }}</p>
+      <p *ngIf="reportResult.accessibilityNote" class="text-blue-700 text-xs mt-2">
+        <strong>Note:</strong> {{ reportResult.accessibilityNote }}
+      </p>
+    </div>
+
+    <!-- Summary (only show if not a validation error) -->
+    <div *ngIf="!reportResult.isError && reportResult.summary" class="text-sm text-gray-700 dark:text-gray-300 mb-4">
+      <p><strong>Success:</strong> {{ reportResult.summary.successCount }}</p>
+      <p><strong>Failed:</strong> {{ reportResult.summary.failedCount }}</p>
+      <p>
+        <strong>Needs manual check:</strong>
+        {{ reportResult.summary.manualCheckCount }}
+      </p>
+    </div>
+
+    <!-- Failures (only show if not a validation error) -->
+    <div *ngIf="!reportResult.isError && reportResult.failures?.length">
       <h4 class="font-medium text-red-600 mb-1">Failures</h4>
-      <ul class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300">
+      <ul
+        class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300"
+      >
         <li *ngFor="let fail of reportResult.failures">
           <strong>{{ fail.Rule }}</strong> - {{ fail.Description }}
         </li>
       </ul>
     </div>
 
-    <div *ngIf="reportResult.needsManualCheck?.length" class="mt-4">
+    <!-- Manual Checks (only show if not a validation error) -->
+    <div *ngIf="!reportResult.isError && reportResult.needsManualCheck?.length" class="mt-4">
       <h4 class="font-medium text-yellow-600 mb-1">Needs Manual Check</h4>
-      <ul class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300">
+      <ul
+        class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300"
+      >
         <li *ngFor="let item of reportResult.needsManualCheck">
           <strong>{{ item.Rule }}</strong> - {{ item.Description }}
         </li>

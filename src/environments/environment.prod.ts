@@ -1,7 +1,4 @@
 export const environment = { 
   production: true, 
-  // New working backend
-  apiUrl: 'https://accessibility-checker-jupgghbak-kates-projects-e59a7a1b.vercel.app',
-  // PDF upload endpoint
-  uploadEndpoint: '/upload-pdf'
+  apiUrl: 'https://accessibility-checker-2sj3m9idk-kates-projects-e59a7a1b.vercel.app/upload-pdf' 
 };
