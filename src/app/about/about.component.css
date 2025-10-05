@@ -1,0 +1,31 @@
+/* About component specific styles */
+.text-auburn-orange {
+  color: #fd5e00; /* Auburn orange color */
+}
+
+.bg-auburn-blue {
+  background-color: #0c2340; /* Auburn navy blue color */
+}
+
+.bg-auburn-orange {
+  background-color: #fd5e00; /* Auburn orange color */
+}
+
+/* Hover effects for feature cards */
+.grid > div:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Link hover effects */
+a.text-auburn-orange:hover {
+  color: #ff7a33;
+  transition: color 0.2s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -8,6 +8,8 @@ module.exports = {
         surface: '#334155',    // slate-700
         text: '#e2e8f0',       // slate-200
         primary: '#0ea5e9',    // sky-500
+        'auburn-blue': '#003366', // Auburn University Navy Blue
+        'auburn-orange': '#DD550C', // Auburn University Orange
       },
     },
   },
