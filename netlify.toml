@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  publish = "docs"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect all routes to index.html for Angular routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
