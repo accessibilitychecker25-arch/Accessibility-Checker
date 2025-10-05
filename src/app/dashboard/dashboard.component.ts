@@ -36,18 +36,6 @@ export class DashboardComponent {
     console.log('Uploading file:', file.name, 'with title:', title);    this.progress = 0;
     this.isUploading = true;
 
-    // Require title client-side
-    if (!title) {
-      this.reportResult = {
-        fileName: file.name,
-        isError: true,
-        apiMessage: 'Document title is required. Please provide a title before uploading.',
-        errorDetails: 'Missing document title.'
-      };
-      this.isUploading = false;
-      return;
-    }
-
     // Check file size (warn if over 10MB, which is common backend limit)
     const fileSizeMB = file.size / (1024 * 1024);
     if (fileSizeMB > 10) {

@@ -39,7 +39,7 @@ export class FileUploadComponent {
 
   // Validation methods for accessibility standards
   isFormValid(): boolean {
-    return !!(this.selectedFile && this.title?.trim() && this.isFileNameValid());
+    return !!(this.selectedFile && this.isFileNameValid());
   }
 
   isFileNameValid(): boolean {
