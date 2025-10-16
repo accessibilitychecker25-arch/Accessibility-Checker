@@ -73,8 +73,6 @@ interface DocxRemediationResponse {
       filenameFlag?: string | null;
     };
   };
-  downloadId?: string;
-  downloadUrl?: string;
 }
 
 @Component({
@@ -87,6 +85,8 @@ interface DocxRemediationResponse {
 export class DashboardComponent {
   isUploading = false;
   progress = 0;
+  selectedFile?: File;
+  fileName: string = '';
 
   // backend response
   remediation?: DocxRemediationResponse;
@@ -99,7 +99,7 @@ export class DashboardComponent {
   handleFile(payload: { file: File; title: string }) {
     const file = payload.file;
     const title = (payload.title || '').trim();
-
+    this.selectedFile = file;
     this.progress = 0;
     this.isUploading = true;
     this.remediation = undefined;
@@ -140,6 +140,7 @@ export class DashboardComponent {
             const res = (event as HttpResponse<any>)
               .body as DocxRemediationResponse;
             this.remediation = res;
+            this.fileName = res.suggestedFileName ? res.suggestedFileName : "remediated.docx";
             this.issues = this.flattenIssues(res);
             this.isUploading = false;
           }
@@ -278,26 +279,41 @@ export class DashboardComponent {
   }
 
   downloadFixed() {
-    const url = this.remediation?.downloadUrl;
-    if (!url) return;
+    const downloadUrl = `${API_URL}/download-document`;
 
-    this.http.get(url, { responseType: 'blob' }).subscribe({
-      next: (blob) => {
-        const suggested = this.remediation?.suggestedFileName?.trim();
-        const fallback =
-          this.remediation?.fileName?.replace(/\.docx$/i, '') +
-          '-remediated.docx';
-        const filename = suggested || fallback || 'remediated.docx';
+    if (!this.selectedFile) {
+      console.error('No file selected for download');
+      return; // Early return if no file is selected
+    }
+    // Prepare form data to send file to the server
+    const formData = new FormData();
+    formData.append('file', this.selectedFile); // Add the file object
 
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(a.href);
-      },
-      error: (err) => {
-        console.error('Download failed', err);
-      },
-    });
+    // Send POST request with file object
+    this.http
+      .post(downloadUrl, formData, {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .subscribe({
+        next: (response: HttpResponse<Blob>) => {
+          // Check if the response body is not null
+          const blob = response.body;
+          if (!blob) {
+            console.error('Error: Empty response body');
+            return;
+          }
+
+          // Create a download link and trigger the download
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob); // Blob URL for downloading
+          a.download = this.fileName; // Set the filename for the downloaded file
+          a.click(); // Trigger the download
+          URL.revokeObjectURL(a.href); // Cleanup the URL object after download
+        },
+        error: (err) => {
+          console.error('Download failed', err);
+        },
+      });
   }
 }

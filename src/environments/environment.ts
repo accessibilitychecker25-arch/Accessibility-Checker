@@ -1,4 +1,8 @@
-export const environment = { 
-  production: false, 
-  apiUrl: 'https://accessibility-checker-2sj3m9idk-kates-projects-e59a7a1b.vercel.app/upload-pdf' 
+export const environment = {
+  production: false,
+  //   apiUrl:
+  //     'https://accessibility-checker-qag6cfgp4-kates-projects-e59a7a1b.vercel.app',
+  // };
+
+  apiUrl: 'https://accessibility-checker-rose.vercel.app',
 };
