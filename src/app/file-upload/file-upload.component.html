@@ -1,55 +1,48 @@
-<div class="space-y-3">
+<div class="flex items-center space-x-4">
+  <!-- File Upload Button -->
   <div class="flex items-center space-x-2">
-    <!-- Hidden native input - only allow .docx files -->
     <input
+      #fileInput
       type="file"
       id="fileInput"
-      accept=".docx"
+      class="sr-only"
+      [attr.accept]="
+        '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      "
       (change)="onFileSelected($event)"
-      class="hidden"
     />
-
-    <!-- Styled label that triggers input -->
-    <label
-      for="fileInput"
-      class="text-sm px-3 py-1 rounded bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 transition cursor-pointer"
+    <!-- Trigger for File Selection -->
+    <button
+      type="button"
+      class="text-sm px-3 py-1 rounded bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 transition"
+      (click)="triggerFileDialog()"
     >
       {{ selectedFile ? selectedFile.name : "Choose File" }}
-    </label>
-
-    <!-- Process button with filename validation -->
-    <button
-      class="text-sm px-3 py-1 rounded transition"
-      [class.bg-blue-600]="isFormValid()"
-      [class.text-white]="isFormValid()"
-      [class.hover:bg-blue-700]="isFormValid()"
-      [class.bg-gray-400]="!isFormValid()"
-      [class.text-gray-600]="!isFormValid()"
-      [class.cursor-not-allowed]="!isFormValid()"
-      (click)="submit()"
-      [disabled]="!isFormValid()"
-    >
-      Process
     </button>
   </div>
-  
-  <!-- Filename validation feedback -->
-  <div [hidden]="!selectedFile || isFileNameValid()" class="mt-2">
-    <div class="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
-      <p class="text-yellow-800 font-medium mb-1">📝 Filename Accessibility Issues:</p>
-      <ul class="text-yellow-700 text-xs space-y-1">
-        <li [hidden]="!hasGenericName()">• Filename appears generic (like "document1" or "untitled"). Use a descriptive name.</li>
-        <li [hidden]="!hasUnderscores()">• Underscores will be replaced with hyphens for better accessibility.</li>
-        <li [hidden]="isDescriptive()">• Use a more descriptive filename that explains the document's content.</li>
-      </ul>
-      <p class="text-yellow-700 text-xs mt-2">
-        <strong>Suggested name:</strong> {{ getSuggestedFilename() }}
-      </p>
-    </div>
-  </div>
-  
-  <!-- Supported file types info -->
-  <p class="text-xs text-gray-600 dark:text-gray-400">
-    Supported formats: Word Document (.docx) only
-  </p>
+
+  <!-- Process Button -->
+  <button
+    class="text-sm px-3 py-1 rounded transition"
+    [class.bg-blue-600]="isFormValid()"
+    [class.text-white]="isFormValid()"
+    [class.hover:bg-blue-700]="isFormValid()"
+    [class.bg-gray-400]="!isFormValid()"
+    [class.text-gray-600]="!isFormValid()"
+    [class.cursor-not-allowed]="!isFormValid()"
+    (click)="submit()"
+    [disabled]="!isFormValid()"
+  >
+    Process
+  </button>
+
+  <!-- Clear Button -->
+  <button
+    type="button"
+    class="text-sm px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition"
+    (click)="clearFile()"
+    [disabled]="!selectedFile"
+  >
+    Clear
+  </button>
 </div>
