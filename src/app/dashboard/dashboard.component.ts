@@ -158,6 +158,15 @@ export class DashboardComponent {
       });
   }
 
+  handleClear() {
+    this.selectedFile = undefined;
+    this.remediation = undefined;
+    this.issues = [];
+    this.isUploading = false;
+    this.progress = 0;
+    this.fileName = '';
+  }
+
   private flattenIssues(res: DocxRemediationResponse): RemediationIssue[] {
     if (!res?.report?.details) return [];
     const d = res.report.details;

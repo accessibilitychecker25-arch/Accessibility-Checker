@@ -16,6 +16,7 @@ import { CommonModule } from '@angular/common';
 })
 export class FileUploadComponent {
   @Output() submitted = new EventEmitter<{ file: File; title: string }>();
+  @Output() cleared = new EventEmitter<void>();
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   selectedFile?: File;
 
@@ -37,6 +38,7 @@ export class FileUploadComponent {
     if (this.fileInput?.nativeElement) {
       this.fileInput.nativeElement.value = '';
     }
+    this.cleared.emit();
   }
 
   // Handle file selection
