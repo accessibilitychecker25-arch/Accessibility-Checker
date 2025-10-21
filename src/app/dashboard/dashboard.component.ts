@@ -279,7 +279,7 @@ export class DashboardComponent {
   }
 
   downloadFixed() {
-    const downloadUrl = `${API_URL}/download-document`;
+    const downloadUrl = `${environment.apiUrl}${environment.downloadEndpoint}`;
 
     if (!this.selectedFile) {
       console.error('No file selected for download');
