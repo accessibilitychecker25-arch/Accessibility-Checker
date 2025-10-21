@@ -27,6 +27,7 @@ interface DocxRemediationResponse {
     details: {
       // FIXES (low risk)
       removedProtection?: boolean;
+      documentProtected?: boolean;
       fileNameFixed?: boolean;
       tablesHeaderRowSet?: Array<{ tableIndex: number }>;
       languageDefaultFixed?: { setTo: string };
@@ -181,6 +182,14 @@ export class DashboardComponent {
         message:
           'Document protection has been successfully removed, allowing full editing access.',
       });
+    
+    if (d.documentProtected === true)
+      out.push({
+        type: 'flagged',
+        message:
+          'Document is protected - will be unlocked in remediation for improved accessibility.',
+      });
+
     if (d.fileNameFixed)
       out.push({
         type: 'fixed',
