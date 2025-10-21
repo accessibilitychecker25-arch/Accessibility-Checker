@@ -313,12 +313,24 @@ export class DashboardComponent {
             return;
           }
 
-          // Create a download link and trigger the download
+          // Extract filename from Content-Disposition header
+          const contentDisposition = response.headers.get('Content-Disposition');
+          let filename = 'remediated-document.docx'; // default
+          
+          if (contentDisposition) {
+            const matches = /filename="([^"]+)"/.exec(contentDisposition);
+            if (matches && matches[1]) {
+              filename = matches[1];
+            }
+          }
+          
+          // Create download link with the correct filename
+          const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob); // Blob URL for downloading
-          a.download = this.fileName; // Set the filename for the downloaded file
-          a.click(); // Trigger the download
-          URL.revokeObjectURL(a.href); // Cleanup the URL object after download
+          a.href = url;
+          a.download = filename; // Use the filename from the header
+          a.click();
+          URL.revokeObjectURL(url);
         },
         error: (err) => {
           console.error('Download failed', err);
