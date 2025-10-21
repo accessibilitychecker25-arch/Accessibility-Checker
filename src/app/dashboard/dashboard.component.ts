@@ -123,7 +123,7 @@ export class DashboardComponent {
   }
 
   private uploadDocxFile(file: File, title: string) {
-    const uploadUrl = `${API_URL}/upload-document`; // <-- important
+    const uploadUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
     const formData = new FormData();
     formData.append('file', file);
     formData.append('title', title); // backend may use this to set core title
