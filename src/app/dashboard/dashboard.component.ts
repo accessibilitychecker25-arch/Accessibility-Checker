@@ -87,6 +87,7 @@ export class DashboardComponent {
   progress = 0;
   selectedFile?: File;
   fileName: string = '';
+  downloadFileName: string = '';
 
   // backend response
   remediation?: DocxRemediationResponse;
@@ -165,6 +166,7 @@ export class DashboardComponent {
     this.isUploading = false;
     this.progress = 0;
     this.fileName = '';
+    this.downloadFileName = '';
   }
 
   private flattenIssues(res: DocxRemediationResponse): RemediationIssue[] {
@@ -323,6 +325,9 @@ export class DashboardComponent {
               filename = matches[1];
             }
           }
+          
+          // Store the filename for display purposes
+          this.downloadFileName = filename;
           
           // Create download link with the correct filename
           const url = URL.createObjectURL(blob);

@@ -59,10 +59,10 @@
       </button>
 
       <div
-        *ngIf="remediation.suggestedFileName"
+        *ngIf="remediation.suggestedFileName || downloadFileName"
         class="mt-2 text-sm text-gray-600"
       >
-        Suggested file name: <code>{{ remediation.suggestedFileName }}</code>
+        Download filename: <code>{{ downloadFileName || remediation.suggestedFileName }}</code>
       </div>
 
       <hr class="my-6" />
