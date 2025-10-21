@@ -1,5 +1,6 @@
 export const environment = { 
   production: true, 
   apiUrl: 'https://accessibility-checker-rose.vercel.app',
-  uploadEndpoint: '/api/upload-document'
+  uploadEndpoint: '/api/upload-document',
+  // Force rebuild
 };
