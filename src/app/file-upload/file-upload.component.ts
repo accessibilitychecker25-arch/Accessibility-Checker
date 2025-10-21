@@ -2,6 +2,7 @@ import {
   Component,
   EventEmitter,
   Output,
+  Input,
   ViewChild,
   ElementRef,
 } from '@angular/core';
@@ -17,6 +18,7 @@ import { CommonModule } from '@angular/common';
 export class FileUploadComponent {
   @Output() submitted = new EventEmitter<{ file: File; title: string }>();
   @Output() cleared = new EventEmitter<void>();
+  @Input() hasResults = false;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   selectedFile?: File;
 
