@@ -1,101 +1,74 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Output,
+  Input,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-file-upload',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './file-upload.component.html',
-  styleUrls: ['./file-upload.component.css'], // ✅ plural
+  styleUrls: ['./file-upload.component.css'],
 })
 export class FileUploadComponent {
-  // Emit the file object
   @Output() submitted = new EventEmitter<{ file: File; title: string }>();
+  @Output() cleared = new EventEmitter<void>();
+  @Input() hasResults = false;
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   selectedFile?: File;
 
+  // Reset file input value to allow reselecting the same file
+  resetNativeInputValue() {
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+    }
+  }
+
+  // Trigger the file input dialog
+  triggerFileDialog() {
+    this.fileInput?.nativeElement?.click();
+  }
+
+  // Clear selected file
+  clearFile() {
+    this.selectedFile = undefined;
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+    }
+    this.cleared.emit();
+  }
+
+  // Handle file selection
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files?.length) {
-      this.selectedFile = input.files[0];
-      console.log('Selected file:', this.selectedFile);
-      
-      // File selected - no title needed
+    const file = input.files?.[0];
+    if (file && this.isValidFile(file)) {
+      this.selectedFile = file;
     }
   }
 
+  // Check if the selected file is valid (DOCX)
+  isValidFile(file: File): boolean {
+    return (
+      file.type ===
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+  }
+
+  // Submit the file
   submit() {
-    // Only require file and valid filename
-    if (this.isFormValid()) {
-      const cleanedFile = this.createCleanedFile();
-      this.submitted.emit({ file: cleanedFile, title: '' });
-    } else {
-      // Simple client-side feedback - will be visible in console
-      if (!this.selectedFile) console.warn('No file selected');
-      if (!this.isFileNameValid()) console.warn('Filename needs to be more descriptive');
-    }
+    if (!this.isFormValid()) return;
+    this.submitted.emit({ file: this.selectedFile!, title: '' });
+    this.selectedFile = undefined;
   }
 
-  // Validation methods for accessibility standards
+  // Validate if a file is selected
   isFormValid(): boolean {
-    return !!(this.selectedFile && this.isFileNameValid());
-  }
-
-  isFileNameValid(): boolean {
-    if (!this.selectedFile) return false;
-    return this.isDescriptive() && !this.hasGenericName();
-  }
-
-  hasGenericName(): boolean {
-    if (!this.selectedFile) return false;
-    const name = this.selectedFile.name.toLowerCase();
-    const genericPatterns = [
-      /^document\d*\./,
-      /^untitled\d*\./,
-      /^new\s?document\d*\./,
-      /^doc\d*\./,
-      /^file\d*\./
-    ];
-    return genericPatterns.some(pattern => pattern.test(name));
-  }
-
-  hasUnderscores(): boolean {
-    if (!this.selectedFile) return false;
-    return this.selectedFile.name.includes('_');
-  }
-
-  isDescriptive(): boolean {
-    if (!this.selectedFile) return false;
-    const nameWithoutExt = this.selectedFile.name.replace(/\.[^/.]+$/, '');
-    // Check if filename has at least 3 characters and contains meaningful words
-    return nameWithoutExt.length >= 3 && /[a-zA-Z]/.test(nameWithoutExt);
-  }
-
-  getSuggestedFilename(): string {
-    if (!this.selectedFile) return '';
-    let suggested = this.selectedFile.name;
-    
-    // Replace underscores with hyphens
-    suggested = suggested.replace(/_/g, '-');
-    
-    // If generic, suggest a descriptive placeholder name
-    if (this.hasGenericName()) {
-      const extension = suggested.split('.').pop();
-      suggested = `descriptive-document-name.${extension}`;
-    }
-    
-    return suggested;
-  }
-
-  createCleanedFile(): File {
-    if (!this.selectedFile) return this.selectedFile!;
-    
-    const suggestedName = this.getSuggestedFilename();
-    
-    // If filename needs cleaning, create new File object with clean name
-    if (suggestedName !== this.selectedFile.name) {
-      return new File([this.selectedFile], suggestedName, {
-        type: this.selectedFile.type,
-        lastModified: this.selectedFile.lastModified
-      });
-    }
-    
-    return this.selectedFile;
+    return !!this.selectedFile; // Only check if a file is selected
   }
 }
