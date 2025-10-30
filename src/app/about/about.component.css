@@ -11,6 +11,11 @@
   background-color: #fd5e00; /* Auburn orange color */
 }
 
+/* Auburn paragraph indent */
+.auburn-paragraph-indent {
+  padding-left: 3rem;
+}
+
 /* Hover effects for feature cards */
 .grid > div:hover {
   transform: translateY(-2px);
