@@ -479,6 +479,44 @@ export class DashboardComponent {
           if (this.remediation?.report?.details?.documentProtected) {
             this.showPostDownloadBanner = true;
           }
+
+          // Authoritative re-check: send the downloaded blob back to the upload analysis endpoint
+          // so the UI shows the exact server-side post-remediation report (avoids client heuristics).
+          try {
+            const analysisUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
+            const reForm = new FormData();
+            // Append blob as a file; use the filename determined above so server sees correct name
+            reForm.append('file', blob, filename);
+
+            this.http.post(analysisUrl, reForm).subscribe({
+              next: (resp: any) => {
+                // Replace remediation with authoritative server response and re-render issues
+                try {
+                  const res = resp as DocxRemediationResponse;
+                  if (res && res.report) {
+                    this.remediation = res;
+                    this.fileName = res.suggestedFileName ? res.suggestedFileName : filename;
+                    this.issues = this.flattenIssues(res);
+                    // Hide post-download banner if server confirms protection removed
+                    if (!this.remediation.report.details?.documentProtected) {
+                      this.showPostDownloadBanner = false;
+                    }
+                  }
+                } catch (e) {
+                  console.warn('Failed to parse authoritative report', e);
+                }
+              },
+              error: (err) => {
+                console.warn('Authoritative re-check failed', err);
+                // keep existing remediation but surface a message
+                this.issues = [
+                  { type: 'flagged', message: `Could not refresh authoritative report: ${err?.message || err?.statusText || 'error'}` },
+                ];
+              },
+            });
+          } catch (e) {
+            console.warn('Authoritative re-check error', e);
+          }
         },
         error: (err) => {
           console.error('Download failed', err);
