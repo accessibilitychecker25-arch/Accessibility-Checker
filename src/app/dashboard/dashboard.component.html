@@ -44,11 +44,20 @@
         >
           Fixed: {{ remediation.report.summary.fixed }}
         </span>
+        <span class="self-center text-sm text-gray-700">(client-estimated auto-fixes: {{ countAutoFixableIssues() }})</span>
         <span
           class="inline-block px-4 py-2 rounded-full bg-yellow-500 text-black"
         >
           Flagged: {{ remediation.report.summary.flagged }}
         </span>
+      </div>
+
+      <div *ngIf="remediation" class="mb-4">
+        <h5 class="text-sm font-medium mb-2">Auto-fixed items (client estimate)</h5>
+        <ul class="list-disc list-inside text-sm text-gray-700">
+          <li *ngFor="let a of getAutoFixedItems()">{{ a }}</li>
+          <li *ngIf="getAutoFixedItems().length === 0">(none detected)</li>
+        </ul>
       </div>
 
       <button

@@ -105,6 +105,36 @@ export class DashboardComponent {
   // flattened list for the UI
   issues: RemediationIssue[] = [];
 
+  // For debug/UX: list of auto-fixed items computed on the client
+  getAutoFixedItems(): string[] {
+    if (!this.remediation?.report?.details) return [];
+    const d = this.remediation.report.details;
+    const items: string[] = [];
+
+    if (d.removedProtection) items.push('Document protection removed');
+    if (d.fileNameFixed) items.push('File name fixed');
+    if (d.tablesHeaderRowSet?.length) items.push(`${d.tablesHeaderRowSet.length} table header(s) set`);
+    if (d.languageDefaultFixed) items.push(`Language set to ${d.languageDefaultFixed.setTo}`);
+
+    // new backend flags
+    if (d.textShadowsRemoved) {
+      if (typeof d.textShadowsRemoved === 'number') items.push(`${d.textShadowsRemoved} text shadow(s) removed`);
+      else items.push('Text shadows removed');
+    }
+    if (d.fontsNormalized) {
+      if (typeof d.fontsNormalized === 'object' && (d.fontsNormalized as any).replaced)
+        items.push(`${(d.fontsNormalized as any).replaced} font run(s) normalized`);
+      else items.push('Fonts normalized to sans-serif');
+    }
+    if (d.minFontSizeEnforced) {
+      if (typeof d.minFontSizeEnforced === 'object' && (d.minFontSizeEnforced as any).adjustedRuns)
+        items.push(`${(d.minFontSizeEnforced as any).adjustedRuns} run(s) adjusted to min font size`);
+      else items.push('Minimum font size enforced');
+    }
+
+    return items;
+  }
+
   constructor(private http: HttpClient) {}
 
   handleFile(payload: { file: File; title: string }) {
@@ -435,7 +465,7 @@ export class DashboardComponent {
       });
   }
 
-  private countAutoFixableIssues(): number {
+  countAutoFixableIssues(): number {
     // Count issues that the backend automatically fixes during download/remediation
     // These are the same issues that show "fixed" status but weren't counted yet
     if (!this.remediation?.report?.details) return 0;
