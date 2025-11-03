@@ -65,6 +65,13 @@
         Download filename: <code>{{ downloadFileName || remediation.suggestedFileName }}</code>
       </div>
 
+      <!-- Help modal shown when remediation removed protection but file still opens in Protected View -->
+      <app-help-modal
+        *ngIf="showHelpModal"
+        [fileName]="(downloadFileName || remediation.suggestedFileName || remediation.report.fileName) || ''"
+        (close)="showHelpModal = false"
+      ></app-help-modal>
+
       <hr class="my-6" />
 
       <h4 class="text-lg mb-2">Details</h4>

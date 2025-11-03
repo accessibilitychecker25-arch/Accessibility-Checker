@@ -12,6 +12,7 @@ import {
 } from '@angular/common/http';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { CommonModule } from '@angular/common';
+import { HelpModalComponent } from '../help-modal/help-modal.component';
 
 type RemediationIssue =
   | { type: 'fixed'; message: string }
@@ -79,11 +80,13 @@ interface DocxRemediationResponse {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FileUploadComponent, HttpClientModule, CommonModule],
+  imports: [FileUploadComponent, HttpClientModule, CommonModule, HelpModalComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent {
+  // whether to show the unblock help modal after download
+  showHelpModal = false;
   isUploading = false;
   progress = 0;
   selectedFile?: File;
@@ -324,35 +327,58 @@ export class DashboardComponent {
             return;
           }
 
-          // Extract filename from Content-Disposition header
-          const contentDisposition = response.headers.get('Content-Disposition');
+          const contentType = (response.headers.get('content-type') || '').toLowerCase();
+
+          // If server returned JSON (error payload), parse and show a user message
+          if (contentType.includes('application/json')) {
+            // blob.text() returns a promise with the JSON string
+            blob.text().then((txt) => {
+              try {
+                const payload = JSON.parse(txt);
+                this.issues = [
+                  { type: 'flagged', message: payload?.error || 'Server error during remediation' },
+                ];
+              } catch (e) {
+                this.issues = [
+                  { type: 'flagged', message: 'Unexpected server response during remediation.' },
+                ];
+              }
+            });
+            return;
+          }
+
+          // Extract filename from Content-Disposition header (supports filename and filename*=)
+          const contentDisposition = response.headers.get('content-disposition') || response.headers.get('Content-Disposition') || '';
           let filename = 'remediated-document.docx'; // default
-          
+
           if (contentDisposition) {
-            const matches = /filename="([^"]+)"/.exec(contentDisposition);
-            if (matches && matches[1]) {
-              filename = matches[1];
+            // Try filename*=UTF-8''name.docx first
+            const fstar = contentDisposition.match(/filename\*=[^']*''([^;\n\r]+)/i);
+            if (fstar && fstar[1]) {
+              try {
+                filename = decodeURIComponent(fstar[1]);
+              } catch (e) {
+                filename = fstar[1];
+              }
+            } else {
+              const matches = /filename=\s*"?([^";]+)"?/i.exec(contentDisposition);
+              if (matches && matches[1]) filename = matches[1];
             }
           }
-          
+
           // Store the filename for display purposes
           this.downloadFileName = filename;
 
           // Update the "fixed" counter after successful download
-          // The download endpoint actually performs the fixes, so we update the counter
-          // to reflect that all flagged items that could be fixed are now fixed
           if (this.remediation?.report?.summary) {
-            // Move all auto-fixable items from flagged to fixed
             const autoFixableCount = this.countAutoFixableIssues();
             this.remediation.report.summary.fixed += autoFixableCount;
             this.remediation.report.summary.flagged -= autoFixableCount;
-            
-            // Ensure flagged doesn't go negative
             if (this.remediation.report.summary.flagged < 0) {
               this.remediation.report.summary.flagged = 0;
             }
           }
-          
+
           // Create download link with the correct filename
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -360,9 +386,17 @@ export class DashboardComponent {
           a.download = filename; // Use the filename from the header
           a.click();
           URL.revokeObjectURL(url);
+
+          // If the original report said the document was protected, show unblock help
+          if (this.remediation?.report?.details?.documentProtected) {
+            this.showHelpModal = true;
+          }
         },
         error: (err) => {
           console.error('Download failed', err);
+          this.issues = [
+            { type: 'flagged', message: `Download failed: ${err?.error?.message || err.statusText || err.message || 'Unknown error'}` },
+          ];
         },
       });
   }

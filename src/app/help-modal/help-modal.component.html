@@ -1,0 +1,18 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black opacity-40" (click)="onClose()"></div>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-xl w-full p-6 z-10">
+    <h3 class="text-lg font-semibold mb-2">Downloaded file opens in Protected View?</h3>
+    <p class="mb-3 text-sm text-gray-700 dark:text-gray-200">
+      Windows may mark files downloaded from the web as "from the Internet".
+      If your Word file opens in Protected View, right‑click the downloaded file → Properties → Check "Unblock" → Apply → OK → Reopen file.
+    </p>
+
+    <p class="mb-2 text-sm">Or run this PowerShell command (copy & paste):</p>
+    <pre class="bg-gray-100 dark:bg-gray-900 p-3 rounded text-sm overflow-auto">{{ copyCommand }}</pre>
+
+    <div class="mt-4 flex justify-end space-x-2">
+      <button class="px-3 py-1 bg-gray-200 rounded" (click)="copyToClipboard()">{{ copied ? 'Copied' : 'Copy command' }}</button>
+      <button class="px-3 py-1 bg-blue-600 text-white rounded" (click)="onClose()">Close</button>
+    </div>
+  </div>
+</div>
