@@ -247,20 +247,12 @@ export class DashboardComponent {
       });
 
     if (d.fontsNormalized) {
-      // If the server also enforced min font size, include that info in the fonts message
-      let sizeText = '';
-      if (d.minFontSizeEnforced && typeof d.minFontSizeEnforced === 'object') {
-        const enforcedPt = (d.minFontSizeEnforced as any).enforcedSizePt || (d.minFontSizeEnforced as any).targetPt || (d.minFontSizeEnforced as any).minSizePt;
-        if (enforcedPt) sizeText = ` (min size ${enforcedPt}pt)`;
-        else sizeText = ' (min size 11pt)';
-      }
-
       out.push({
         type: 'fixed',
         message:
           typeof d.fontsNormalized === 'object' && (d.fontsNormalized as any).replaced
-            ? `${(d.fontsNormalized as any).replaced} font run(s) were normalized to a sans-serif font${sizeText}.`
-            : `Fonts were normalized to a sans-serif for better accessibility${sizeText}.`,
+            ? `${(d.fontsNormalized as any).replaced} font run(s) were normalized to a sans-serif font.`
+            : 'Fonts were normalized to a sans-serif for better accessibility.',
       });
     }
 
