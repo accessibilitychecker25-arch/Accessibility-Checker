@@ -28,6 +28,10 @@ interface DocxRemediationResponse {
     details: {
       // FIXES (low risk)
       removedProtection?: boolean;
+  // New remediation flags (backend)
+  textShadowsRemoved?: boolean | number; // true or count
+  fontsNormalized?: boolean | { replaced?: number };
+  minFontSizeEnforced?: boolean | { adjustedRuns?: number };
       documentProtected?: boolean;
       fileNameFixed?: boolean;
       tablesHeaderRowSet?: Array<{ tableIndex: number }>;
@@ -186,6 +190,33 @@ export class DashboardComponent {
         type: 'fixed',
         message:
           'Document protection has been successfully removed, allowing full editing access.',
+      });
+    // New backend fixes
+    if (d.textShadowsRemoved)
+      out.push({
+        type: 'fixed',
+        message:
+          typeof d.textShadowsRemoved === 'number'
+            ? `${d.textShadowsRemoved} text shadow style(s) were removed for improved readability.`
+            : 'Text shadows were removed to improve text legibility.',
+      });
+
+    if (d.fontsNormalized)
+      out.push({
+        type: 'fixed',
+        message:
+          typeof d.fontsNormalized === 'object' && d.fontsNormalized.replaced
+            ? `${d.fontsNormalized.replaced} font run(s) were normalized to a sans-serif font.`
+            : 'Fonts were normalized to a sans-serif for better accessibility.',
+      });
+
+    if (d.minFontSizeEnforced)
+      out.push({
+        type: 'fixed',
+        message:
+          typeof d.minFontSizeEnforced === 'object' && d.minFontSizeEnforced.adjustedRuns
+            ? `Minimum font size enforced for ${d.minFontSizeEnforced.adjustedRuns} run(s).`
+            : 'Minimum font size enforced to 11pt for readability.',
       });
     
     if (d.documentProtected === true)
@@ -417,6 +448,19 @@ export class DashboardComponent {
     if (d.fileNameNeedsFixing && !d.fileNameFixed) count++; // Filename fix
     if (d.tablesHeaderRowSet?.length) count += d.tablesHeaderRowSet.length; // Table headers
     if (d.languageDefaultIssue && !d.languageDefaultFixed) count++; // Language fix
+    // New backend auto-fixes
+    if (d.textShadowsRemoved === true) count++;
+    else if (typeof d.textShadowsRemoved === 'number') count += d.textShadowsRemoved;
+    if (d.fontsNormalized) {
+      if (typeof d.fontsNormalized === 'object' && d.fontsNormalized.replaced)
+        count += d.fontsNormalized.replaced;
+      else count++;
+    }
+    if (d.minFontSizeEnforced) {
+      if (typeof d.minFontSizeEnforced === 'object' && d.minFontSizeEnforced.adjustedRuns)
+        count += d.minFontSizeEnforced.adjustedRuns;
+      else count++;
+    }
     
     return count;
   }
