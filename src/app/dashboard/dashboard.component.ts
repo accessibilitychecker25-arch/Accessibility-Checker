@@ -87,6 +87,8 @@ interface DocxRemediationResponse {
 export class DashboardComponent {
   // whether to show the unblock help modal after download
   showHelpModal = false;
+  // show a small post-download banner with alternatives and a button to open modal
+  showPostDownloadBanner = false;
   isUploading = false;
   progress = 0;
   selectedFile?: File;
@@ -387,9 +389,10 @@ export class DashboardComponent {
           a.click();
           URL.revokeObjectURL(url);
 
-          // If the original report said the document was protected, show unblock help
+          // If the original report said the document was protected, show a post-download banner
+          // with alternatives and a button to open the unblock help modal.
           if (this.remediation?.report?.details?.documentProtected) {
-            this.showHelpModal = true;
+            this.showPostDownloadBanner = true;
           }
         },
         error: (err) => {

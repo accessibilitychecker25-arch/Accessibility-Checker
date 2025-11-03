@@ -65,7 +65,23 @@
         Download filename: <code>{{ downloadFileName || remediation.suggestedFileName }}</code>
       </div>
 
-      <!-- Help modal shown when remediation removed protection but file still opens in Protected View -->
+      <!-- Post-download banner (shown when the original document was protected) -->
+      <div *ngIf="showPostDownloadBanner" class="mt-4 p-4 border-l-4 border-yellow-400 bg-yellow-50 dark:bg-gray-800">
+        <div class="flex items-start justify-between">
+          <div class="mr-4">
+            <strong>Note:</strong>
+            <div class="text-sm">This file was protected when analyzed. If it still opens in Protected View after download, you can unblock it or use one of the alternatives below.</div>
+          </div>
+          <div class="flex-shrink-0 space-x-2">
+            <button class="px-3 py-1 bg-gray-200 rounded" (click)="showHelpModal = true">Show unblock steps</button>
+            <a class="px-3 py-1 bg-indigo-600 text-white rounded" href="https://office.live.com/start/Word.aspx" target="_blank" rel="noopener">Open in Word Online</a>
+            <a class="px-3 py-1 bg-green-600 text-white rounded" href="https://onedrive.live.com/" target="_blank" rel="noopener">Save to OneDrive</a>
+            <button class="px-3 py-1 bg-gray-100 rounded" (click)="showPostDownloadBanner = false">Dismiss</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Help modal shown when the user requests unblock steps -->
       <app-help-modal
         *ngIf="showHelpModal"
         [fileName]="(downloadFileName || remediation.suggestedFileName || remediation.report.fileName) || ''"
