@@ -90,6 +90,8 @@ interface DocxRemediationResponse {
   styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent {
+  // temporary debug flag to help diagnose "empty" dashboard issues
+  showDebugBanner = true;
   // whether to show the unblock help modal after download
   showHelpModal = false;
   // show a small post-download banner with alternatives and a button to open modal
@@ -151,7 +153,14 @@ export class DashboardComponent {
     }
   }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // runtime trace to help diagnose why the dashboard may render empty
+    // Check your browser console for this message when visiting /dashboard
+    try {
+      // eslint-disable-next-line no-console
+      console.log('DashboardComponent instantiated');
+    } catch (e) {}
+  }
 
   handleFile(payload: { file: File; title: string }) {
     const file = payload.file;

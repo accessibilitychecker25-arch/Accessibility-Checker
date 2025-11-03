@@ -10,6 +10,9 @@
 </div>
 
 <div class="card p-6 shadow-lg rounded-lg max-w-3xl mx-auto mt-6">
+    <div *ngIf="showDebugBanner" class="mb-4 p-3 bg-blue-50 text-sm border rounded text-blue-900">
+      Debug: Dashboard loaded (remove `showDebugBanner` when done). Open DevTools console to see "DashboardComponent instantiated".
+    </div>
   <h2 class="text-2xl font-semibold text-center mb-6">
     Document Accessibility Remediation
   </h2>
