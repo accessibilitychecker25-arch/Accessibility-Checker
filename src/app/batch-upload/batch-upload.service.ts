@@ -21,8 +21,10 @@ export class BatchUploadService {
     const url = `${environment.apiUrl}/api/batch-upload`;
     const fd = new FormData();
     files.forEach((f) => fd.append('files[]', f));
-    const headers: any = {};
-    if (sessionId) headers['X-Session-ID'] = sessionId;
-    return this.http.post(url, fd, { observe: 'events', reportProgress: true, headers });
+    // Avoid sending a custom header which can trigger CORS preflight issues on some backends.
+    // Put the sessionId in the form body instead (server should accept this), which avoids
+    // the need for Access-Control-Allow-Headers for a custom header.
+    if (sessionId) fd.append('sessionId', sessionId);
+    return this.http.post(url, fd, { observe: 'events', reportProgress: true });
   }
 }

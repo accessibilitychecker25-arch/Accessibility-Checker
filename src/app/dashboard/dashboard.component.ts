@@ -153,6 +153,8 @@ export class DashboardComponent {
     this.progress = 0;
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
+      // set selectedFile so downloadFixed() has a file to operate on (single-file download)
+      this.selectedFile = f;
       try {
         const res = await this.uploadDocxFilePromise(f, '');
         // For now, show the latest file's remediation in the UI
