@@ -83,6 +83,11 @@ interface DocxRemediationResponse {
   };
 }
 
+interface ProcessedReport {
+  response: DocxRemediationResponse;
+  original?: File;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -109,7 +114,7 @@ export class DashboardComponent {
   remediation?: DocxRemediationResponse;
 
   // store processed reports for multi-file batches so user can inspect each
-  processedReports: DocxRemediationResponse[] = [];
+  processedReports: ProcessedReport[] = [];
 
   // flattened list for the UI
   issues: RemediationIssue[] = [];
@@ -164,9 +169,9 @@ export class DashboardComponent {
         this.remediation = res;
         this.fileName = res.suggestedFileName ? res.suggestedFileName : f.name;
         this.issues = this.flattenIssues(res);
-        // keep a copy of each processed file's report for per-file viewing
+        // keep a copy of each processed file's report for per-file viewing (store original file)
         try {
-          if (res && res.report) this.processedReports.push(res);
+          if (res && res.report) this.processedReports.push({ response: res, original: f });
         } catch (e) {}
       } catch (err: any) {
         this.issues = [{ type: 'flagged', message: `Upload failed for ${f.name}: ${err?.message || err?.statusText || 'error'}` }];
@@ -207,11 +212,26 @@ export class DashboardComponent {
   selectReport(index: number) {
     const rep = this.processedReports[index];
     if (!rep) return;
-    this.remediation = rep;
-    this.issues = this.flattenIssues(rep);
-    this.fileName = rep.suggestedFileName || rep.report?.fileName || '';
+    // rep is a ProcessedReport { response, original }
+    this.remediation = rep.response;
+    this.issues = this.flattenIssues(rep.response);
+    this.fileName = rep.response.suggestedFileName || rep.response.report?.fileName || '';
+    // expose the original file so Download uses it
+    this.selectedFile = rep.original;
     // reset download filename when switching
     this.downloadFileName = '';
+  }
+
+  // Download a specific processed report by index (uses stored original file when available)
+  downloadReport(index: number) {
+    const rep = this.processedReports[index];
+    if (!rep) return;
+    if (rep.original) {
+      this.selectedFile = rep.original;
+      this.downloadFixed();
+    } else {
+      this.issues = [{ type: 'flagged', message: 'Original file not available for download' }];
+    }
   }
 
   handleFile(payload: { file: File; title: string }) {
@@ -260,9 +280,9 @@ export class DashboardComponent {
             this.remediation = res;
             this.fileName = res.suggestedFileName ? res.suggestedFileName : "remediated.docx";
             this.issues = this.flattenIssues(res);
-            // Save processed report so the user can inspect it individually later
+            // Save processed report so the user can inspect it individually later (include original file)
             try {
-              if (res && res.report) this.processedReports.push(res);
+              if (res && res.report) this.processedReports.push({ response: res, original: file });
             } catch (e) {}
             this.isUploading = false;
           }
