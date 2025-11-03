@@ -93,6 +93,8 @@ export class DashboardComponent {
   showHelpModal = false;
   // show a small post-download banner with alternatives and a button to open modal
   showPostDownloadBanner = false;
+  // debug: show raw remediation.report JSON
+  showRawReport = false;
   isUploading = false;
   progress = 0;
   selectedFile?: File;
@@ -133,6 +135,14 @@ export class DashboardComponent {
     }
 
     return items;
+  }
+
+  get rawReportJson(): string {
+    try {
+      return this.remediation?.report ? JSON.stringify(this.remediation.report, null, 2) : '';
+    } catch (e) {
+      return '';
+    }
   }
 
   constructor(private http: HttpClient) {}

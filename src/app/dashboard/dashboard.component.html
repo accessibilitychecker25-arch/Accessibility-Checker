@@ -60,6 +60,14 @@
         </ul>
       </div>
 
+      <div *ngIf="remediation" class="mb-4">
+        <button class="text-sm underline text-blue-600" (click)="showRawReport = !showRawReport">
+          {{ showRawReport ? 'Hide' : 'Show' }} raw remediation report
+        </button>
+
+        <pre *ngIf="showRawReport" class="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto whitespace-pre-wrap">{{ rawReportJson }}</pre>
+      </div>
+
       <button
         class="btn btn-primary mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
         (click)="downloadFixed()"
