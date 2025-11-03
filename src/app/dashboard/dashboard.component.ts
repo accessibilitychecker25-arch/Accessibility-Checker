@@ -129,9 +129,14 @@ export class DashboardComponent {
       else items.push('Fonts normalized to sans-serif');
     }
     if (d.minFontSizeEnforced) {
-      if (typeof d.minFontSizeEnforced === 'object' && (d.minFontSizeEnforced as any).adjustedRuns)
-        items.push(`${(d.minFontSizeEnforced as any).adjustedRuns} run(s) adjusted to min font size`);
-      else items.push('Minimum font size enforced');
+      if (typeof d.minFontSizeEnforced === 'object') {
+        const adj = (d.minFontSizeEnforced as any).adjustedRuns;
+        const enforcedPt = (d.minFontSizeEnforced as any).enforcedSizePt || (d.minFontSizeEnforced as any).targetPt || (d.minFontSizeEnforced as any).minSizePt;
+        const sizeText = enforcedPt ? `${enforcedPt}pt` : '11pt';
+        items.push(adj ? `${adj} run(s) adjusted to min font size (${sizeText})` : `Minimum font size enforced (${sizeText})`);
+      } else {
+        items.push('Minimum font size enforced (11pt)');
+      }
     }
 
     return items;
@@ -250,14 +255,22 @@ export class DashboardComponent {
             : 'Fonts were normalized to a sans-serif for better accessibility.',
       });
 
-    if (d.minFontSizeEnforced)
-      out.push({
-        type: 'fixed',
-        message:
-          typeof d.minFontSizeEnforced === 'object' && d.minFontSizeEnforced.adjustedRuns
-            ? `Minimum font size enforced for ${d.minFontSizeEnforced.adjustedRuns} run(s).`
-            : 'Minimum font size enforced to 11pt for readability.',
-      });
+    if (d.minFontSizeEnforced) {
+      // Prefer server-provided details when available (adjusted runs, enforced size)
+      if (typeof d.minFontSizeEnforced === 'object') {
+        const adj = (d.minFontSizeEnforced as any).adjustedRuns;
+        const enforcedPt = (d.minFontSizeEnforced as any).enforcedSizePt || (d.minFontSizeEnforced as any).targetPt || (d.minFontSizeEnforced as any).minSizePt;
+        const sizeText = enforcedPt ? `${enforcedPt}pt` : '11pt';
+        out.push({
+          type: 'fixed',
+          message: adj
+            ? `Minimum font size enforced to ${sizeText} for ${adj} run(s).`
+            : `Minimum font size enforced to ${sizeText} for readability.`,
+        });
+      } else {
+        out.push({ type: 'fixed', message: 'Minimum font size enforced to 11pt for readability.' });
+      }
+    }
     
     if (d.documentProtected === true)
       out.push({
