@@ -114,3 +114,40 @@ If you want, I can also:
 - Draft tests (Cypress) for multi-file upload and ZIP download validation.
 
 Happy to help the FE team implement this — tell me which framework (Angular) and I can provide an example patch to integrate it into `src/app`.
+
+Quick code snippets
+
+Add Session Management (example)
+
+```js
+// On app start
+const session = await fetch('/api/session', { method: 'POST' });
+const { sessionId } = await session.json();
+
+// Keep alive every 5 min while user active
+setInterval(() => fetch('/api/session', {
+  method: 'POST',
+  headers: { 'X-Session-ID': sessionId }
+}), 5 * 60 * 1000);
+```
+
+Update File Upload (batch support)
+
+```js
+// Change from single file to batch support
+const formData = new FormData();
+files.forEach((file, i) => formData.append(`file${i}`, file));
+
+fetch('/api/batch-upload', {
+  method: 'POST',
+  headers: { 'X-Session-ID': sessionId },
+  body: formData,
+});
+```
+
+Update Download (batch ZIP)
+
+```js
+// Instead of single file download
+window.open(`/api/batch-download?batchId=${batchId}&sessionId=${sessionId}`);
+```
