@@ -337,6 +337,21 @@ export class DashboardComponent {
           
           // Store the filename for display purposes
           this.downloadFileName = filename;
+
+          // Update the "fixed" counter after successful download
+          // The download endpoint actually performs the fixes, so we update the counter
+          // to reflect that all flagged items that could be fixed are now fixed
+          if (this.remediation?.report?.summary) {
+            // Move all auto-fixable items from flagged to fixed
+            const autoFixableCount = this.countAutoFixableIssues();
+            this.remediation.report.summary.fixed += autoFixableCount;
+            this.remediation.report.summary.flagged -= autoFixableCount;
+            
+            // Ensure flagged doesn't go negative
+            if (this.remediation.report.summary.flagged < 0) {
+              this.remediation.report.summary.flagged = 0;
+            }
+          }
           
           // Create download link with the correct filename
           const url = URL.createObjectURL(blob);
@@ -350,5 +365,22 @@ export class DashboardComponent {
           console.error('Download failed', err);
         },
       });
+  }
+
+  private countAutoFixableIssues(): number {
+    // Count issues that the backend automatically fixes during download/remediation
+    // These are the same issues that show "fixed" status but weren't counted yet
+    if (!this.remediation?.report?.details) return 0;
+    
+    const d = this.remediation.report.details;
+    let count = 0;
+    
+    // These are auto-fixed by the backend during remediation:
+    if (d.documentProtected === true) count++; // Protection removal
+    if (d.fileNameNeedsFixing && !d.fileNameFixed) count++; // Filename fix
+    if (d.tablesHeaderRowSet?.length) count += d.tablesHeaderRowSet.length; // Table headers
+    if (d.languageDefaultIssue && !d.languageDefaultFixed) count++; // Language fix
+    
+    return count;
   }
 }
