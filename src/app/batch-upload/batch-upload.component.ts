@@ -53,13 +53,40 @@ export class BatchUploadComponent implements OnDestroy {
         if (event.type === HttpEventType.UploadProgress) {
           this.progress = Math.round((100 * event.loaded) / (event.total ?? 1));
         } else if (event.type === HttpEventType.Response) {
-          this.results = event.body?.files || event.body || [];
+          const body = event.body || {};
+          // sessionId may be returned/renewed by the server
+          if (body.sessionId) this.sessionId = body.sessionId;
+          // files array contains per-file analysis info
+          this.results = body.files || [];
+          // If backend indicates files are ready for batch download, show download button
         }
       },
       error: (err: any) => {
         // show server error body if available
         if (err?.error) this.error = JSON.stringify(err.error);
         else this.error = err?.message || err?.statusText || 'Upload failed';
+      },
+    });
+  }
+
+  downloadAll() {
+    this.error = undefined;
+    if (!this.sessionId) {
+      this.error = 'No session available for download';
+      return;
+    }
+    this.svc.getBatchDownload(this.sessionId).subscribe({
+      next: (blob) => {
+        const filename = `remediated-files.zip`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err: any) => {
+        this.error = `Batch download failed: ${err?.message || err?.statusText || 'error'}`;
       },
     });
   }

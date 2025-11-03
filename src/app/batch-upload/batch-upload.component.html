@@ -11,6 +11,7 @@
     <input type="file" multiple (change)="onFilesSelected($event)" />
     <div style="margin-top:8px">
       <button (click)="upload()">Upload selected files</button>
+        <button class="ml-2" (click)="downloadAll()" *ngIf="results?.length">Download all remediated files</button>
     </div>
 
     <div *ngIf="progress">

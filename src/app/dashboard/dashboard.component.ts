@@ -108,6 +108,9 @@ export class DashboardComponent {
   // backend response
   remediation?: DocxRemediationResponse;
 
+  // store processed reports for multi-file batches so user can inspect each
+  processedReports: DocxRemediationResponse[] = [];
+
   // flattened list for the UI
   issues: RemediationIssue[] = [];
 
@@ -161,6 +164,10 @@ export class DashboardComponent {
         this.remediation = res;
         this.fileName = res.suggestedFileName ? res.suggestedFileName : f.name;
         this.issues = this.flattenIssues(res);
+        // keep a copy of each processed file's report for per-file viewing
+        try {
+          if (res && res.report) this.processedReports.push(res);
+        } catch (e) {}
       } catch (err: any) {
         this.issues = [{ type: 'flagged', message: `Upload failed for ${f.name}: ${err?.message || err?.statusText || 'error'}` }];
         break;
@@ -194,6 +201,17 @@ export class DashboardComponent {
       // eslint-disable-next-line no-console
       console.log('DashboardComponent instantiated');
     } catch (e) {}
+  }
+
+  // Select a processed report to view its details in the main panel
+  selectReport(index: number) {
+    const rep = this.processedReports[index];
+    if (!rep) return;
+    this.remediation = rep;
+    this.issues = this.flattenIssues(rep);
+    this.fileName = rep.suggestedFileName || rep.report?.fileName || '';
+    // reset download filename when switching
+    this.downloadFileName = '';
   }
 
   handleFile(payload: { file: File; title: string }) {
@@ -242,6 +260,10 @@ export class DashboardComponent {
             this.remediation = res;
             this.fileName = res.suggestedFileName ? res.suggestedFileName : "remediated.docx";
             this.issues = this.flattenIssues(res);
+            // Save processed report so the user can inspect it individually later
+            try {
+              if (res && res.report) this.processedReports.push(res);
+            } catch (e) {}
             this.isUploading = false;
           }
         },

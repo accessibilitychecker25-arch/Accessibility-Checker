@@ -27,4 +27,13 @@ export class BatchUploadService {
     if (sessionId) fd.append('sessionId', sessionId);
     return this.http.post(url, fd, { observe: 'events', reportProgress: true });
   }
+
+  /**
+   * Download the ZIP for a completed session. The backend should return
+   * an application/zip blob and set Content-Disposition for filename.
+   */
+  getBatchDownload(sessionId: string): Observable<Blob> {
+    const url = `${environment.apiUrl}/api/batch-download?sessionId=${encodeURIComponent(sessionId)}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
 }

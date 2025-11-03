@@ -18,6 +18,21 @@
     Document Accessibility Remediation
   </h2>
 
+  <div *ngIf="processedReports?.length" class="mb-4">
+    <h4 class="text-md font-medium mb-2">Processed files</h4>
+    <div class="grid grid-cols-1 gap-2">
+      <div *ngFor="let p of processedReports; let idx = index" class="p-2 border rounded flex items-center justify-between">
+        <div>
+          <div class="font-medium">{{ p.report.fileName || p.fileName || 'Untitled' }}</div>
+          <div class="text-sm text-gray-600">Fixed: {{ p.report.summary.fixed }} · Flagged: {{ p.report.summary.flagged }}</div>
+        </div>
+        <div class="space-x-2">
+          <button class="text-sm px-2 py-1 bg-gray-100 rounded" (click)="selectReport(idx)">View report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div *ngIf="isUploading" class="mt-3">
     <div>Uploading & processing… {{ progress }}%</div>
     <div class="relative pt-1">
