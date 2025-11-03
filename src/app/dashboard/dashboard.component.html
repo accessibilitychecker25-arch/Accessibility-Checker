@@ -5,15 +5,10 @@
   [hasResults]="!!remediation"
 ></app-file-upload>
 
-<!-- Batch upload UI for session-based multi-file workflows -->
-<div class="mt-6">
-  <app-batch-upload></app-batch-upload>
-</div>
+
 
 <div class="card p-6 shadow-lg rounded-lg max-w-3xl mx-auto mt-6">
-    <div *ngIf="showDebugBanner" class="mb-4 p-3 bg-blue-50 text-sm border rounded text-blue-900">
-      Debug: Dashboard loaded (remove `showDebugBanner` when done). Open DevTools console to see "DashboardComponent instantiated".
-    </div>
+    <!-- debug banner removed -->
   <h2 class="text-2xl font-semibold text-center mb-6">
     Document Accessibility Remediation
   </h2>
@@ -27,8 +22,8 @@
           <div class="text-sm text-gray-600">Fixed: {{ p.response.report.summary.fixed }} · Flagged: {{ p.response.report.summary.flagged }}</div>
         </div>
         <div class="space-x-2">
-          <button class="text-sm px-2 py-1 bg-gray-100 rounded" (click)="selectReport(idx)">View report</button>
-          <button class="text-sm px-2 py-1 bg-blue-100 rounded" (click)="downloadReport(idx)">Download</button>
+          <button class="text-sm px-2 py-1 bg-gray-100 text-gray-800 dark:text-gray-100 rounded" (click)="selectReport(idx)">View report</button>
+          <button class="text-sm px-2 py-1 bg-blue-100 text-gray-800 dark:text-gray-100 rounded" (click)="downloadReport(idx)">Download</button>
         </div>
       </div>
     </div>
@@ -86,11 +81,11 @@
       </div>
 
       <div *ngIf="remediation" class="mb-4">
-        <button class="text-sm underline text-blue-600" (click)="showRawReport = !showRawReport">
+        <button class="text-sm underline text-blue-600 dark:text-blue-300" (click)="showRawReport = !showRawReport">
           {{ showRawReport ? 'Hide' : 'Show' }} raw remediation report
         </button>
 
-        <pre *ngIf="showRawReport" class="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto whitespace-pre-wrap">{{ rawReportJson }}</pre>
+        <pre *ngIf="showRawReport" class="mt-2 p-3 bg-gray-100 text-gray-800 dark:text-gray-100 rounded text-xs overflow-auto whitespace-pre-wrap">{{ rawReportJson }}</pre>
       </div>
 
       <button
@@ -115,10 +110,10 @@
             <div class="text-sm">This file was protected when analyzed. If it still opens in Protected View after download, you can unblock it or use one of the alternatives below.</div>
           </div>
           <div class="flex-shrink-0 space-x-2">
-            <button class="px-3 py-1 bg-gray-200 rounded" (click)="showHelpModal = true">Show unblock steps</button>
+            <button class="px-3 py-1 bg-gray-200 text-gray-800 dark:text-gray-100 rounded" (click)="showHelpModal = true">Show unblock steps</button>
             <a class="px-3 py-1 bg-indigo-600 text-white rounded" href="https://office.live.com/start/Word.aspx" target="_blank" rel="noopener">Open in Word Online</a>
             <a class="px-3 py-1 bg-green-600 text-white rounded" href="https://onedrive.live.com/" target="_blank" rel="noopener">Save to OneDrive</a>
-            <button class="px-3 py-1 bg-gray-100 rounded" (click)="showPostDownloadBanner = false">Dismiss</button>
+            <button class="px-3 py-1 bg-gray-100 text-gray-800 dark:text-gray-100 rounded" (click)="showPostDownloadBanner = false">Dismiss</button>
           </div>
         </div>
       </div>

@@ -14,7 +14,6 @@ import { firstValueFrom } from 'rxjs';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { CommonModule } from '@angular/common';
 import { HelpModalComponent } from '../help-modal/help-modal.component';
-import { BatchUploadComponent } from '../batch-upload/batch-upload.component';
 
 type RemediationIssue =
   | { type: 'fixed'; message: string }
@@ -91,13 +90,12 @@ interface ProcessedReport {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FileUploadComponent, HttpClientModule, CommonModule, HelpModalComponent, BatchUploadComponent],
+  imports: [FileUploadComponent, HttpClientModule, CommonModule, HelpModalComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent {
   // temporary debug flag to help diagnose "empty" dashboard issues
-  showDebugBanner = true;
   // whether to show the unblock help modal after download
   showHelpModal = false;
   // show a small post-download banner with alternatives and a button to open modal
@@ -200,12 +198,7 @@ export class DashboardComponent {
   }
 
   constructor(private http: HttpClient) {
-    // runtime trace to help diagnose why the dashboard may render empty
-    // Check your browser console for this message when visiting /dashboard
-    try {
-      // eslint-disable-next-line no-console
-      console.log('DashboardComponent instantiated');
-    } catch (e) {}
+    // debug logging removed
   }
 
   // Select a processed report to view its details in the main panel
