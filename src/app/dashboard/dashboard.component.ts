@@ -13,6 +13,7 @@ import {
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { CommonModule } from '@angular/common';
 import { HelpModalComponent } from '../help-modal/help-modal.component';
+import { BatchUploadComponent } from '../batch-upload/batch-upload.component';
 
 type RemediationIssue =
   | { type: 'fixed'; message: string }
@@ -84,7 +85,7 @@ interface DocxRemediationResponse {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FileUploadComponent, HttpClientModule, CommonModule, HelpModalComponent],
+  imports: [FileUploadComponent, HttpClientModule, CommonModule, HelpModalComponent, BatchUploadComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })

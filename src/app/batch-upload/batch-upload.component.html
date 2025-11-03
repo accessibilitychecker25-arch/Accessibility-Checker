@@ -1,0 +1,29 @@
+<div class="batch-upload">
+  <h3>Batch upload (session)</h3>
+
+  <div *ngIf="!sessionId">
+    <button (click)="createSession()">Create session</button>
+    <div class="error" *ngIf="error">{{ error }}</div>
+  </div>
+
+  <div *ngIf="sessionId">
+    <div>Session: <strong>{{ sessionId }}</strong></div>
+    <input type="file" multiple (change)="onFilesSelected($event)" />
+    <div style="margin-top:8px">
+      <button (click)="upload()">Upload selected files</button>
+    </div>
+
+    <div *ngIf="progress">
+      Upload progress: {{ progress }}%
+    </div>
+
+    <div *ngIf="results?.length">
+      <h4>Results</h4>
+      <ul>
+        <li *ngFor="let r of results">{{ r.fileName || r.name || r }}</li>
+      </ul>
+    </div>
+
+    <div class="error" *ngIf="error">{{ error }}</div>
+  </div>
+</div>
