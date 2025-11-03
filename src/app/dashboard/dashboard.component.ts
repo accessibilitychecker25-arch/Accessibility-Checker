@@ -10,6 +10,7 @@ import {
   HttpEventType,
   HttpResponse,
 } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { CommonModule } from '@angular/common';
 import { HelpModalComponent } from '../help-modal/help-modal.component';
@@ -145,6 +146,37 @@ export class DashboardComponent {
     return items;
   }
 
+  // Handle multiple files submitted from the file picker (sequentially)
+  async handleFiles(files: File[]) {
+    if (!files || !files.length) return;
+    this.isUploading = true;
+    this.progress = 0;
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      try {
+        const res = await this.uploadDocxFilePromise(f, '');
+        // For now, show the latest file's remediation in the UI
+        this.remediation = res;
+        this.fileName = res.suggestedFileName ? res.suggestedFileName : f.name;
+        this.issues = this.flattenIssues(res);
+      } catch (err: any) {
+        this.issues = [{ type: 'flagged', message: `Upload failed for ${f.name}: ${err?.message || err?.statusText || 'error'}` }];
+        break;
+      }
+      // simple progress indicator by files
+      this.progress = Math.round(((i + 1) / files.length) * 100);
+    }
+    this.isUploading = false;
+  }
+
+  // Promise-based uploader used for sequential multi-file processing
+  private uploadDocxFilePromise(file: File, title: string): Promise<DocxRemediationResponse> {
+    const uploadUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', title);
+    return firstValueFrom(this.http.post<DocxRemediationResponse>(uploadUrl, formData));
+  }
   get rawReportJson(): string {
     try {
       return this.remediation?.report ? JSON.stringify(this.remediation.report, null, 2) : '';

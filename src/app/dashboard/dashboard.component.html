@@ -1,5 +1,6 @@
 <app-file-upload 
   (submitted)="handleFile($event)" 
+  (submittedMultiple)="handleFiles($event)"
   (cleared)="handleClear()"
   [hasResults]="!!remediation"
 ></app-file-upload>
