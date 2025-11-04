@@ -138,17 +138,8 @@ export class DashboardComponent {
         items.push(`${(d.fontsNormalized as any).replaced} font run(s) normalized`);
       else items.push('Fonts normalized to sans-serif');
     }
-    if (d.minFontSizeEnforced !== undefined && d.minFontSizeEnforced !== null) {
-      if (typeof d.minFontSizeEnforced === 'object') {
-        const adj = (d.minFontSizeEnforced as any).adjustedRuns;
-        const enforcedPt = (d.minFontSizeEnforced as any).enforcedSizePt || (d.minFontSizeEnforced as any).targetPt || (d.minFontSizeEnforced as any).minSizePt;
-        const sizeText = enforcedPt ? `${enforcedPt}pt` : '11pt';
-        // Show a clear message even when adjustedRuns is 0 (server enforced size but adjusted nothing)
-        items.push(typeof adj === 'number' && adj > 0 ? `${adj} run(s) adjusted to min font size (${sizeText})` : `Minimum font size enforced (${sizeText})`);
-      } else {
-        items.push('Minimum font size enforced (11pt)');
-      }
-    }
+    const minFontMsg = this.getMinFontSizeMessage(d);
+    if (minFontMsg) items.push(minFontMsg);
 
     return items;
   }
@@ -160,6 +151,20 @@ export class DashboardComponent {
     if (v === true) return 1; // boolean true means at least one was removed
     if (typeof v === 'number' && isFinite(v) && v > 0) return Math.floor(v);
     return 0;
+  }
+
+  // Build a human-friendly message for min font size enforcement (or adjustments)
+  private getMinFontSizeMessage(details: DocxRemediationResponse['report']['details'] | undefined): string | null {
+    if (!details || details.minFontSizeEnforced === undefined || details.minFontSizeEnforced === null) return null;
+    const v = details.minFontSizeEnforced;
+    if (typeof v === 'object') {
+      const adj = (v as any).adjustedRuns;
+      const enforcedPt = (v as any).enforcedSizePt || (v as any).targetPt || (v as any).minSizePt;
+      const sizeText = enforcedPt ? `${enforcedPt}pt` : '11pt';
+      if (typeof adj === 'number' && adj > 0) return `${adj} run(s) adjusted to min font size (${sizeText})`;
+      return `Minimum font size enforced (${sizeText})`;
+    }
+    return 'Minimum font size enforced (11pt)';
   }
 
   // Handle multiple files submitted from the file picker (sequentially)
@@ -346,22 +351,8 @@ export class DashboardComponent {
       });
     }
 
-    if (d.minFontSizeEnforced !== undefined && d.minFontSizeEnforced !== null) {
-      // Prefer server-provided details when available (adjusted runs, enforced size)
-      if (typeof d.minFontSizeEnforced === 'object') {
-        const adj = (d.minFontSizeEnforced as any).adjustedRuns;
-        const enforcedPt = (d.minFontSizeEnforced as any).enforcedSizePt || (d.minFontSizeEnforced as any).targetPt || (d.minFontSizeEnforced as any).minSizePt;
-        const sizeText = enforcedPt ? `${enforcedPt}pt` : '11pt';
-        out.push({
-          type: 'fixed',
-          message: typeof adj === 'number' && adj > 0
-            ? `Minimum font size enforced to ${sizeText} for ${adj} run(s).`
-            : `Minimum font size enforced to ${sizeText} for readability.`,
-        });
-      } else {
-        out.push({ type: 'fixed', message: 'Minimum font size enforced to 11pt for readability.' });
-      }
-    }
+    const minFontMsgFlat = this.getMinFontSizeMessage(d);
+    if (minFontMsgFlat) out.push({ type: 'fixed', message: minFontMsgFlat.includes('adjusted') ? minFontMsgFlat.replace('adjusted to min font size', 'enforced to') : minFontMsgFlat.replace('Minimum font size enforced', 'Minimum font size enforced to') });
     
     if (d.documentProtected === true)
       out.push({
