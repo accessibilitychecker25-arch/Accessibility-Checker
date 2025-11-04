@@ -135,19 +135,8 @@ export class DashboardComponent {
       else items.push(`${tsCount} text shadow(s) removed`);
     }
     // Report font normalization. If the server reports both fontsNormalized and
-    // fontSizesNormalized, prefer fontSizesNormalized (more specific) to avoid
-    // duplicate entries.
-    if (d.fontSizesNormalized) {
-      if (typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns)
-        items.push(`${(d.fontSizesNormalized as any).adjustedRuns} font size run(s) normalized`);
-      else items.push('Font sizes normalized for consistency');
-    } else if (d.fontsNormalized) {
-      if (typeof d.fontsNormalized === 'object' && (d.fontsNormalized as any).replaced)
-        items.push(`${(d.fontsNormalized as any).replaced} font run(s) normalized`);
-      else items.push('Fonts normalized to sans-serif');
-    }
-    const minFontMsg = this.getMinFontSizeMessage(d);
-    if (minFontMsg) items.push(minFontMsg);
+    // NOTE: font normalization messages are rendered separately via
+    // `getFontNormalizationMessage()` in the template to avoid duplicates.
 
     return items;
   }
@@ -376,12 +365,20 @@ export class DashboardComponent {
             : 'Font sizes were normalized for consistency.',
       });
     } else if (d.fontsNormalized) {
+      // If the backend includes additional metadata about the normalization target,
+      // include that in the detail message (e.g. normalized to 'Arial' or 'sans-serif').
+      const fn = d.fontsNormalized as any;
+      let targetLabel = '';
+      if (fn && typeof fn === 'object') {
+        targetLabel = fn.to || fn.normalizedTo || fn.targetFont || fn.font || fn.family || '';
+        if (targetLabel) targetLabel = ` to ${targetLabel}`;
+      }
       out.push({
         type: 'fixed',
         message:
-          typeof d.fontsNormalized === 'object' && (d.fontsNormalized as any).replaced
-            ? `${(d.fontsNormalized as any).replaced} font run(s) were normalized to a sans-serif font.`
-            : 'Fonts were normalized to a sans-serif for better accessibility.',
+          typeof fn === 'object' && fn.replaced
+            ? `${fn.replaced} font run(s) were normalized${targetLabel || ' to a sans-serif font'}.`
+            : `Fonts were normalized${targetLabel || ' to a sans-serif font'} for better accessibility.`,
       });
     }
 
