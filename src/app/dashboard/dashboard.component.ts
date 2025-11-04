@@ -32,6 +32,7 @@ interface DocxRemediationResponse {
   // New remediation flags (backend)
   textShadowsRemoved?: boolean | number; // true or count
   fontsNormalized?: boolean | { replaced?: number };
+  fontSizesNormalized?: boolean | { adjustedRuns?: number };
   minFontSizeEnforced?: boolean | { adjustedRuns?: number };
       documentProtected?: boolean;
       fileNameFixed?: boolean;
@@ -137,6 +138,12 @@ export class DashboardComponent {
       if (typeof d.fontsNormalized === 'object' && (d.fontsNormalized as any).replaced)
         items.push(`${(d.fontsNormalized as any).replaced} font run(s) normalized`);
       else items.push('Fonts normalized to sans-serif');
+    }
+    // New: font size normalization flag from backend
+    if (d.fontSizesNormalized) {
+      if (typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns)
+        items.push(`${(d.fontSizesNormalized as any).adjustedRuns} font size run(s) normalized`);
+      else items.push('Font sizes normalized for consistency');
     }
     const minFontMsg = this.getMinFontSizeMessage(d);
     if (minFontMsg) items.push(minFontMsg);
@@ -348,6 +355,16 @@ export class DashboardComponent {
           typeof d.fontsNormalized === 'object' && (d.fontsNormalized as any).replaced
             ? `${(d.fontsNormalized as any).replaced} font run(s) were normalized to a sans-serif font.`
             : 'Fonts were normalized to a sans-serif for better accessibility.',
+      });
+    }
+    // New: font size normalization reporting
+    if (d.fontSizesNormalized) {
+      out.push({
+        type: 'fixed',
+        message:
+          typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns
+            ? `${(d.fontSizesNormalized as any).adjustedRuns} font size run(s) were normalized for consistency.`
+            : 'Font sizes were normalized for consistency.',
       });
     }
 
@@ -627,6 +644,11 @@ export class DashboardComponent {
     if (d.fontsNormalized) {
       if (typeof d.fontsNormalized === 'object' && d.fontsNormalized.replaced)
         count += d.fontsNormalized.replaced;
+      else count++;
+    }
+    if (d.fontSizesNormalized) {
+      if (typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns)
+        count += (d.fontSizesNormalized as any).adjustedRuns;
       else count++;
     }
     if (d.minFontSizeEnforced) {
