@@ -76,7 +76,10 @@
         <h5 class="text-sm font-medium mb-2">Auto-fixed items (client estimate)</h5>
         <ul class="list-disc list-inside text-sm text-gray-700">
           <li *ngFor="let a of getAutoFixedItems()">{{ a }}</li>
-          <li *ngIf="getAutoFixedItems().length === 0">(none detected)</li>
+            <!-- Explicit font-normalization message (shows when fontsNormalized or fontSizesNormalized present)
+                 Use the helper to avoid duplicate messages when fontSizesNormalized is present. -->
+            <li *ngIf="getFontNormalizationMessage(remediation.report.details) as _msg">{{ _msg }}</li>
+            <li *ngIf="!getAutoFixedItems().length && !getFontNormalizationMessage(remediation.report.details)">(none detected)</li>
         </ul>
       </div>
 

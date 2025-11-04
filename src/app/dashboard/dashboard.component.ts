@@ -161,6 +161,23 @@ export class DashboardComponent {
     return 0;
   }
 
+  // Return a user-friendly message for font normalization when the backend reports it
+  getFontNormalizationMessage(details: DocxRemediationResponse['report']['details'] | undefined): string | null {
+    if (!details) return null;
+    // Prefer fontSizesNormalized (more specific) — caller/template can use this to avoid duplicates
+    if (details.fontSizesNormalized) {
+      if (typeof details.fontSizesNormalized === 'object' && (details.fontSizesNormalized as any).adjustedRuns)
+        return `${(details.fontSizesNormalized as any).adjustedRuns} font size run(s) normalized`;
+      return 'Font sizes normalized for consistency';
+    }
+    if (details.fontsNormalized) {
+      if (typeof details.fontsNormalized === 'object' && (details.fontsNormalized as any).replaced)
+        return `${(details.fontsNormalized as any).replaced} font run(s) normalized to sans-serif`;
+      return 'Fonts normalized to sans-serif';
+    }
+    return null;
+  }
+
   // Build a human-friendly message for min font size enforcement (or adjustments)
   private getMinFontSizeMessage(details: DocxRemediationResponse['report']['details'] | undefined): string | null {
     if (!details || details.minFontSizeEnforced === undefined || details.minFontSizeEnforced === null) return null;
@@ -373,9 +390,9 @@ export class DashboardComponent {
     
     if (d.documentProtected === true)
       out.push({
-        type: 'flagged',
+        type: 'fixed',
         message:
-          'Document is protected - will be unlocked in remediation for improved accessibility.',
+          'Document protection was removed to allow full editing access.',
       });
 
     if (d.fileNameFixed)
