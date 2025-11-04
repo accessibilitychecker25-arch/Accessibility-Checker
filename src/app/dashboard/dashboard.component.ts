@@ -138,12 +138,13 @@ export class DashboardComponent {
         items.push(`${(d.fontsNormalized as any).replaced} font run(s) normalized`);
       else items.push('Fonts normalized to sans-serif');
     }
-    if (d.minFontSizeEnforced) {
+    if (d.minFontSizeEnforced !== undefined && d.minFontSizeEnforced !== null) {
       if (typeof d.minFontSizeEnforced === 'object') {
         const adj = (d.minFontSizeEnforced as any).adjustedRuns;
         const enforcedPt = (d.minFontSizeEnforced as any).enforcedSizePt || (d.minFontSizeEnforced as any).targetPt || (d.minFontSizeEnforced as any).minSizePt;
         const sizeText = enforcedPt ? `${enforcedPt}pt` : '11pt';
-        items.push(adj ? `${adj} run(s) adjusted to min font size (${sizeText})` : `Minimum font size enforced (${sizeText})`);
+        // Show a clear message even when adjustedRuns is 0 (server enforced size but adjusted nothing)
+        items.push(typeof adj === 'number' && adj > 0 ? `${adj} run(s) adjusted to min font size (${sizeText})` : `Minimum font size enforced (${sizeText})`);
       } else {
         items.push('Minimum font size enforced (11pt)');
       }
@@ -345,7 +346,7 @@ export class DashboardComponent {
       });
     }
 
-    if (d.minFontSizeEnforced) {
+    if (d.minFontSizeEnforced !== undefined && d.minFontSizeEnforced !== null) {
       // Prefer server-provided details when available (adjusted runs, enforced size)
       if (typeof d.minFontSizeEnforced === 'object') {
         const adj = (d.minFontSizeEnforced as any).adjustedRuns;
@@ -353,7 +354,7 @@ export class DashboardComponent {
         const sizeText = enforcedPt ? `${enforcedPt}pt` : '11pt';
         out.push({
           type: 'fixed',
-          message: adj
+          message: typeof adj === 'number' && adj > 0
             ? `Minimum font size enforced to ${sizeText} for ${adj} run(s).`
             : `Minimum font size enforced to ${sizeText} for readability.`,
         });
