@@ -363,16 +363,8 @@ export class DashboardComponent {
             : `${tsCountFlat} text shadow style(s) were removed for improved readability.`,
       });
 
-    // Prefer fontSizesNormalized over fontsNormalized to avoid duplicate messages
-    if (d.fontSizesNormalized) {
-      out.push({
-        type: 'fixed',
-        message:
-          typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns
-            ? `${(d.fontSizesNormalized as any).adjustedRuns} font size run(s) were normalized for consistency.`
-            : 'Font sizes were normalized for consistency.',
-      });
-    } else if (d.fontsNormalized) {
+    // Handle both font flags separately - show both when present
+    if (d.fontsNormalized) {
       // If the backend includes additional metadata about the normalization target,
       // include that in the detail message (e.g. normalized to 'Arial' or 'sans-serif').
       const fn = d.fontsNormalized as any;
@@ -387,6 +379,16 @@ export class DashboardComponent {
           typeof fn === 'object' && fn.replaced
             ? `${fn.replaced} font run(s) were normalized${targetLabel || ' to a sans-serif font'}.`
             : `Fonts were normalized${targetLabel || ' to a sans-serif font'} for better accessibility.`,
+      });
+    }
+    
+    if (d.fontSizesNormalized) {
+      out.push({
+        type: 'fixed',
+        message:
+          typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns
+            ? `${(d.fontSizesNormalized as any).adjustedRuns} font size run(s) were normalized for consistency.`
+            : 'Font sizes were normalized for consistency.',
       });
     }
 
