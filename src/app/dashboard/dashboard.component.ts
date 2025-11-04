@@ -127,11 +127,11 @@ export class DashboardComponent {
     if (d.fileNameFixed) items.push('File name fixed');
     if (d.tablesHeaderRowSet?.length) items.push(`${d.tablesHeaderRowSet.length} table header(s) set`);
     if (d.languageDefaultFixed) items.push(`Language set to ${d.languageDefaultFixed.setTo}`);
-
     // new backend flags
-    if (d.textShadowsRemoved) {
-      if (typeof d.textShadowsRemoved === 'number') items.push(`${d.textShadowsRemoved} text shadow(s) removed`);
-      else items.push('Text shadows removed');
+    const tsCount = this.getTextShadowsCount(d);
+    if (tsCount > 0) {
+      if (tsCount === 1) items.push('Text shadows removed');
+      else items.push(`${tsCount} text shadow(s) removed`);
     }
     if (d.fontsNormalized) {
       if (typeof d.fontsNormalized === 'object' && (d.fontsNormalized as any).replaced)
@@ -150,6 +150,15 @@ export class DashboardComponent {
     }
 
     return items;
+  }
+
+  // Normalize the backend's textShadowsRemoved flag into a non-negative integer count
+  private getTextShadowsCount(details: DocxRemediationResponse['report']['details'] | undefined): number {
+    if (!details) return 0;
+    const v = details.textShadowsRemoved;
+    if (v === true) return 1; // boolean true means at least one was removed
+    if (typeof v === 'number' && isFinite(v) && v > 0) return Math.floor(v);
+    return 0;
   }
 
   // Handle multiple files submitted from the file picker (sequentially)
@@ -316,13 +325,14 @@ export class DashboardComponent {
           'Document protection has been successfully removed, allowing full editing access.',
       });
     // New backend fixes
-    if (d.textShadowsRemoved)
+    const tsCountFlat = this.getTextShadowsCount(d);
+    if (tsCountFlat > 0)
       out.push({
         type: 'fixed',
         message:
-          typeof d.textShadowsRemoved === 'number'
-            ? `${d.textShadowsRemoved} text shadow style(s) were removed for improved readability.`
-            : 'Text shadows were removed to improve text legibility.',
+          tsCountFlat === 1
+            ? 'Text shadows were removed to improve text legibility.'
+            : `${tsCountFlat} text shadow style(s) were removed for improved readability.`,
       });
 
     if (d.fontsNormalized) {
@@ -619,9 +629,9 @@ export class DashboardComponent {
     if (d.fileNameNeedsFixing && !d.fileNameFixed) count++; // Filename fix
     if (d.tablesHeaderRowSet?.length) count += d.tablesHeaderRowSet.length; // Table headers
     if (d.languageDefaultIssue && !d.languageDefaultFixed) count++; // Language fix
-    // New backend auto-fixes
-    if (d.textShadowsRemoved === true) count++;
-    else if (typeof d.textShadowsRemoved === 'number') count += d.textShadowsRemoved;
+  // New backend auto-fixes
+  const tsCount = this.getTextShadowsCount(d);
+  if (tsCount > 0) count += tsCount;
     if (d.fontsNormalized) {
       if (typeof d.fontsNormalized === 'object' && d.fontsNormalized.replaced)
         count += d.fontsNormalized.replaced;
