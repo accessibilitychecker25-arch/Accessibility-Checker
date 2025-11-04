@@ -134,9 +134,17 @@ export class DashboardComponent {
       if (tsCount === 1) items.push('Text shadows removed');
       else items.push(`${tsCount} text shadow(s) removed`);
     }
-    // Report font normalization. If the server reports both fontsNormalized and
-    // NOTE: font normalization messages are rendered separately via
-    // `getFontNormalizationMessage()` in the template to avoid duplicates.
+    
+    // Handle both font flags separately to avoid duplicates
+    if (d.fontsNormalized) {
+      items.push('Fonts normalized to sans-serif');
+    }
+    if (d.fontSizesNormalized) {
+      items.push('Font sizes normalized for consistency');
+    }
+    
+    const minFontMsg = this.getMinFontSizeMessage(d);
+    if (minFontMsg) items.push(minFontMsg);
 
     return items;
   }
