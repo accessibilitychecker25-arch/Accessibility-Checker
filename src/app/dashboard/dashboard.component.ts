@@ -34,6 +34,7 @@ interface DocxRemediationResponse {
   fontsNormalized?: boolean | { replaced?: number };
   fontSizesNormalized?: boolean | { adjustedRuns?: number };
   minFontSizeEnforced?: boolean | { adjustedRuns?: number };
+  lineSpacingFixed?: boolean | { adjustedParagraphs?: number };
       documentProtected?: boolean;
       fileNameFixed?: boolean;
       tablesHeaderRowSet?: Array<{ tableIndex: number }>;
@@ -145,6 +146,15 @@ export class DashboardComponent {
     
     const minFontMsg = this.getMinFontSizeMessage(d);
     if (minFontMsg) items.push(minFontMsg);
+    
+    // Line spacing fixes
+    if (d.lineSpacingFixed) {
+      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
+        items.push(`Line spacing fixed for ${d.lineSpacingFixed.adjustedParagraphs} paragraph(s)`);
+      } else {
+        items.push('Line spacing fixed for readability (minimum 1.5)');
+      }
+    }
 
     return items;
   }
@@ -394,6 +404,18 @@ export class DashboardComponent {
 
     const minFontMsgFlat = this.getMinFontSizeMessage(d);
     if (minFontMsgFlat) out.push({ type: 'fixed', message: minFontMsgFlat.includes('adjusted') ? minFontMsgFlat.replace('adjusted to min font size', 'enforced to') : minFontMsgFlat.replace('Minimum font size enforced', 'Minimum font size enforced to') });
+    
+    // Line spacing fixes
+    if (d.lineSpacingFixed) {
+      let lineSpacingMessage = 'Line spacing has been adjusted to at least 1.5 for improved readability.';
+      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
+        lineSpacingMessage = `Line spacing was adjusted for ${d.lineSpacingFixed.adjustedParagraphs} paragraph(s) to meet the minimum 1.5 requirement for readability.`;
+      }
+      out.push({
+        type: 'fixed',
+        message: lineSpacingMessage,
+      });
+    }
     
     if (d.documentProtected === true)
       out.push({
@@ -674,6 +696,15 @@ export class DashboardComponent {
       if (typeof d.minFontSizeEnforced === 'object' && d.minFontSizeEnforced.adjustedRuns)
         count += d.minFontSizeEnforced.adjustedRuns;
       else count++;
+    }
+    
+    // Line spacing fixes
+    if (d.lineSpacingFixed) {
+      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
+        count += d.lineSpacingFixed.adjustedParagraphs;
+      } else {
+        count++;
+      }
     }
     
     return count;
