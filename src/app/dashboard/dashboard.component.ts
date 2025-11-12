@@ -348,6 +348,18 @@ export class DashboardComponent {
     this.progress = 0;
     this.fileName = '';
     this.downloadFileName = '';
+    this.processedReports = []; // Clear all processed reports
+  }
+
+  // Remove individual report
+  removeReport(index: number) {
+    this.processedReports.splice(index, 1);
+    
+    // If we removed the currently selected report, clear the view
+    if (this.remediation && this.processedReports.length === 0) {
+      this.remediation = undefined;
+      this.issues = [];
+    }
   }
 
   private flattenIssues(res: DocxRemediationResponse): RemediationIssue[] {
