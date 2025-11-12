@@ -3,6 +3,7 @@ name: Build and Deploy to docs
 on:
   push:
     branches:
+      - feat/remediate-download-angular
       - kate-testing
 
 jobs:
