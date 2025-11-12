@@ -1,0 +1,28 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Downloaded file unblock help">
+  <div class="absolute inset-0 bg-black opacity-40" (click)="onClose()" aria-hidden="true"></div>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-xl w-full p-6 z-10" tabindex="-1">
+    <h3 class="text-lg font-semibold mb-2">Downloaded file opens in Protected View?</h3>
+    <p class="mb-3 text-sm text-gray-700 dark:text-gray-200">
+      Windows may mark files downloaded from the web as "from the Internet" (Mark‑of‑the‑Web).
+      If your Word file opens in Protected View, right‑click the downloaded file → Properties → Check "Unblock" → Apply → OK → Reopen file.
+    </p>
+
+    <p class="mb-2 text-sm">Or run this PowerShell command (copy & paste):</p>
+    <pre class="bg-gray-100 dark:bg-gray-900 p-3 rounded text-sm overflow-auto" aria-live="polite">{{ copyCommand }}</pre>
+
+    <div class="mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
+      <div class="mb-3 sm:mb-0">
+        <button class="px-3 py-1 mr-2 bg-gray-200 rounded" (click)="copyToClipboard()" aria-label="Copy PowerShell command">{{ copied ? 'Copied' : 'Copy command' }}</button>
+        <button class="px-3 py-1 bg-blue-600 text-white rounded" (click)="onClose()" aria-label="Close help modal">Close</button>
+      </div>
+
+      <div class="text-sm">
+        <span class="block">Alternative flows:</span>
+        <div class="mt-2 flex space-x-2">
+          <a class="px-3 py-1 bg-indigo-600 text-white rounded" href="https://office.live.com/start/Word.aspx" target="_blank" rel="noopener">Open in Word Online</a>
+          <a class="px-3 py-1 bg-green-600 text-white rounded" href="https://onedrive.live.com/" target="_blank" rel="noopener">Save to OneDrive</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

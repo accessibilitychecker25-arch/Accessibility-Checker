@@ -10,8 +10,10 @@ import {
   HttpEventType,
   HttpResponse,
 } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { CommonModule } from '@angular/common';
+import { HelpModalComponent } from '../help-modal/help-modal.component';
 
 type RemediationIssue =
   | { type: 'fixed'; message: string }
@@ -27,6 +29,12 @@ interface DocxRemediationResponse {
     details: {
       // FIXES (low risk)
       removedProtection?: boolean;
+  // New remediation flags (backend)
+  textShadowsRemoved?: boolean | number; // true or count
+  fontsNormalized?: boolean | { replaced?: number };
+  fontSizesNormalized?: boolean | { adjustedRuns?: number };
+  minFontSizeEnforced?: boolean | { adjustedRuns?: number };
+  lineSpacingFixed?: boolean | { adjustedParagraphs?: number };
       documentProtected?: boolean;
       fileNameFixed?: boolean;
       tablesHeaderRowSet?: Array<{ tableIndex: number }>;
@@ -76,14 +84,26 @@ interface DocxRemediationResponse {
   };
 }
 
+interface ProcessedReport {
+  response: DocxRemediationResponse;
+  original?: File;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FileUploadComponent, HttpClientModule, CommonModule],
+  imports: [FileUploadComponent, HttpClientModule, CommonModule, HelpModalComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent {
+  // temporary debug flag to help diagnose "empty" dashboard issues
+  // whether to show the unblock help modal after download
+  showHelpModal = false;
+  // show a small post-download banner with alternatives and a button to open modal
+  showPostDownloadBanner = false;
+  // debug: show raw remediation.report JSON
+  showRawReport = false;
   isUploading = false;
   progress = 0;
   selectedFile?: File;
@@ -93,10 +113,166 @@ export class DashboardComponent {
   // backend response
   remediation?: DocxRemediationResponse;
 
+  // store processed reports for multi-file batches so user can inspect each
+  processedReports: ProcessedReport[] = [];
+
   // flattened list for the UI
   issues: RemediationIssue[] = [];
 
-  constructor(private http: HttpClient) {}
+  // For debug/UX: list of auto-fixed items computed on the client
+  getAutoFixedItems(): string[] {
+    if (!this.remediation?.report?.details) return [];
+    const d = this.remediation.report.details;
+    const items: string[] = [];
+
+    if (d.removedProtection) items.push('Document protection removed');
+    if (d.fileNameFixed) items.push('File name fixed');
+    if (d.tablesHeaderRowSet?.length) items.push(`${d.tablesHeaderRowSet.length} table header(s) set`);
+    if (d.languageDefaultFixed) items.push(`Language set to ${d.languageDefaultFixed.setTo}`);
+    // new backend flags
+    const tsCount = this.getTextShadowsCount(d);
+    if (tsCount > 0) {
+      if (tsCount === 1) items.push('Text shadows removed');
+      else items.push(`${tsCount} text shadow(s) removed`);
+    }
+    
+    // Handle both font flags separately to avoid duplicates
+    if (d.fontsNormalized) {
+      items.push('Fonts normalized to sans-serif');
+    }
+    if (d.fontSizesNormalized) {
+      items.push('Font sizes normalized for consistency');
+    }
+    
+    const minFontMsg = this.getMinFontSizeMessage(d);
+    if (minFontMsg) items.push(minFontMsg);
+    
+    // Line spacing fixes
+    if (d.lineSpacingFixed) {
+      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
+        items.push(`Line spacing fixed for ${d.lineSpacingFixed.adjustedParagraphs} paragraph(s)`);
+      } else {
+        items.push('Line spacing fixed for readability (minimum 1.5)');
+      }
+    }
+
+    return items;
+  }
+
+  // Normalize the backend's textShadowsRemoved flag into a non-negative integer count
+  private getTextShadowsCount(details: DocxRemediationResponse['report']['details'] | undefined): number {
+    if (!details) return 0;
+    const v = details.textShadowsRemoved;
+    if (v === true) return 1; // boolean true means at least one was removed
+    if (typeof v === 'number' && isFinite(v) && v > 0) return Math.floor(v);
+    return 0;
+  }
+
+  // Return a user-friendly message for font normalization when the backend reports it
+  getFontNormalizationMessage(details: DocxRemediationResponse['report']['details'] | undefined): string | null {
+    if (!details) return null;
+    // Prefer fontSizesNormalized (more specific) — caller/template can use this to avoid duplicates
+    if (details.fontSizesNormalized) {
+      if (typeof details.fontSizesNormalized === 'object' && (details.fontSizesNormalized as any).adjustedRuns)
+        return `${(details.fontSizesNormalized as any).adjustedRuns} font size run(s) normalized`;
+      return 'Font sizes normalized for consistency';
+    }
+    if (details.fontsNormalized) {
+      if (typeof details.fontsNormalized === 'object' && (details.fontsNormalized as any).replaced)
+        return `${(details.fontsNormalized as any).replaced} font run(s) normalized to sans-serif`;
+      return 'Fonts normalized to sans-serif';
+    }
+    return null;
+  }
+
+  // Build a human-friendly message for min font size enforcement (or adjustments)
+  private getMinFontSizeMessage(details: DocxRemediationResponse['report']['details'] | undefined): string | null {
+    if (!details || details.minFontSizeEnforced === undefined || details.minFontSizeEnforced === null) return null;
+    const v = details.minFontSizeEnforced;
+    if (typeof v === 'object') {
+      const adj = (v as any).adjustedRuns;
+      const enforcedPt = (v as any).enforcedSizePt || (v as any).targetPt || (v as any).minSizePt;
+      const sizeText = enforcedPt ? `${enforcedPt}pt` : '11pt';
+      if (typeof adj === 'number' && adj > 0) return `${adj} run(s) adjusted to min font size (${sizeText})`;
+      return `Minimum font size enforced (${sizeText})`;
+    }
+    return 'Minimum font size enforced (11pt)';
+  }
+
+  // Handle multiple files submitted from the file picker (sequentially)
+  async handleFiles(files: File[]) {
+    if (!files || !files.length) return;
+    this.isUploading = true;
+    this.progress = 0;
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      // set selectedFile so downloadFixed() has a file to operate on (single-file download)
+      this.selectedFile = f;
+      try {
+        const res = await this.uploadDocxFilePromise(f, '');
+        // For now, show the latest file's remediation in the UI
+        this.remediation = res;
+        this.fileName = res.suggestedFileName ? res.suggestedFileName : f.name;
+        this.issues = this.flattenIssues(res);
+        // keep a copy of each processed file's report for per-file viewing (store original file)
+        try {
+          if (res && res.report) this.processedReports.push({ response: res, original: f });
+        } catch (e) {}
+      } catch (err: any) {
+        this.issues = [{ type: 'flagged', message: `Upload failed for ${f.name}: ${err?.message || err?.statusText || 'error'}` }];
+        break;
+      }
+      // simple progress indicator by files
+      this.progress = Math.round(((i + 1) / files.length) * 100);
+    }
+    this.isUploading = false;
+  }
+
+  // Promise-based uploader used for sequential multi-file processing
+  private uploadDocxFilePromise(file: File, title: string): Promise<DocxRemediationResponse> {
+    const uploadUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', title);
+    return firstValueFrom(this.http.post<DocxRemediationResponse>(uploadUrl, formData));
+  }
+  get rawReportJson(): string {
+    try {
+      return this.remediation?.report ? JSON.stringify(this.remediation.report, null, 2) : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  constructor(private http: HttpClient) {
+    // debug logging removed
+  }
+
+  // Select a processed report to view its details in the main panel
+  selectReport(index: number) {
+    const rep = this.processedReports[index];
+    if (!rep) return;
+    // rep is a ProcessedReport { response, original }
+    this.remediation = rep.response;
+    this.issues = this.flattenIssues(rep.response);
+    this.fileName = rep.response.suggestedFileName || rep.response.report?.fileName || '';
+    // expose the original file so Download uses it
+    this.selectedFile = rep.original;
+    // reset download filename when switching
+    this.downloadFileName = '';
+  }
+
+  // Download a specific processed report by index (uses stored original file when available)
+  downloadReport(index: number) {
+    const rep = this.processedReports[index];
+    if (!rep) return;
+    if (rep.original) {
+      this.selectedFile = rep.original;
+      this.downloadFixed();
+    } else {
+      this.issues = [{ type: 'flagged', message: 'Original file not available for download' }];
+    }
+  }
 
   handleFile(payload: { file: File; title: string }) {
     const file = payload.file;
@@ -144,6 +320,10 @@ export class DashboardComponent {
             this.remediation = res;
             this.fileName = res.suggestedFileName ? res.suggestedFileName : "remediated.docx";
             this.issues = this.flattenIssues(res);
+            // Save processed report so the user can inspect it individually later (include original file)
+            try {
+              if (res && res.report) this.processedReports.push({ response: res, original: file });
+            } catch (e) {}
             this.isUploading = false;
           }
         },
@@ -182,12 +362,66 @@ export class DashboardComponent {
         message:
           'Document protection has been successfully removed, allowing full editing access.',
       });
+    // New backend fixes
+    const tsCountFlat = this.getTextShadowsCount(d);
+    if (tsCountFlat > 0)
+      out.push({
+        type: 'fixed',
+        message:
+          tsCountFlat === 1
+            ? 'Text shadows were removed to improve text legibility.'
+            : `${tsCountFlat} text shadow style(s) were removed for improved readability.`,
+      });
+
+    // Handle both font flags separately - show both when present
+    if (d.fontsNormalized) {
+      // If the backend includes additional metadata about the normalization target,
+      // include that in the detail message (e.g. normalized to 'Arial' or 'sans-serif').
+      const fn = d.fontsNormalized as any;
+      let targetLabel = '';
+      if (fn && typeof fn === 'object') {
+        targetLabel = fn.to || fn.normalizedTo || fn.targetFont || fn.font || fn.family || '';
+        if (targetLabel) targetLabel = ` to ${targetLabel}`;
+      }
+      out.push({
+        type: 'fixed',
+        message:
+          typeof fn === 'object' && fn.replaced
+            ? `${fn.replaced} font run(s) were normalized${targetLabel || ' to a sans-serif font'}.`
+            : `Fonts were normalized${targetLabel || ' to a sans-serif font'} for better accessibility.`,
+      });
+    }
+    
+    if (d.fontSizesNormalized) {
+      out.push({
+        type: 'fixed',
+        message:
+          typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns
+            ? `${(d.fontSizesNormalized as any).adjustedRuns} font size run(s) were normalized for consistency.`
+            : 'Font sizes were normalized for consistency.',
+      });
+    }
+
+    const minFontMsgFlat = this.getMinFontSizeMessage(d);
+    if (minFontMsgFlat) out.push({ type: 'fixed', message: minFontMsgFlat.includes('adjusted') ? minFontMsgFlat.replace('adjusted to min font size', 'enforced to') : minFontMsgFlat.replace('Minimum font size enforced', 'Minimum font size enforced to') });
+    
+    // Line spacing fixes
+    if (d.lineSpacingFixed) {
+      let lineSpacingMessage = 'Line spacing has been adjusted to at least 1.5 for improved readability.';
+      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
+        lineSpacingMessage = `Line spacing was adjusted for ${d.lineSpacingFixed.adjustedParagraphs} paragraph(s) to meet the minimum 1.5 requirement for readability.`;
+      }
+      out.push({
+        type: 'fixed',
+        message: lineSpacingMessage,
+      });
+    }
     
     if (d.documentProtected === true)
       out.push({
-        type: 'flagged',
+        type: 'fixed',
         message:
-          'Document is protected - will be unlocked in remediation for improved accessibility.',
+          'Document protection was removed to allow full editing access.',
       });
 
     if (d.fileNameFixed)
@@ -324,35 +558,53 @@ export class DashboardComponent {
             return;
           }
 
-          // Extract filename from Content-Disposition header
-          const contentDisposition = response.headers.get('Content-Disposition');
+          const contentType = (response.headers.get('content-type') || '').toLowerCase();
+
+          // If server returned JSON (error payload), parse and show a user message
+          if (contentType.includes('application/json')) {
+            // blob.text() returns a promise with the JSON string
+            blob.text().then((txt) => {
+              try {
+                const payload = JSON.parse(txt);
+                this.issues = [
+                  { type: 'flagged', message: payload?.error || 'Server error during remediation' },
+                ];
+              } catch (e) {
+                this.issues = [
+                  { type: 'flagged', message: 'Unexpected server response during remediation.' },
+                ];
+              }
+            });
+            return;
+          }
+
+          // Extract filename from Content-Disposition header (supports filename and filename*=)
+          const contentDisposition = response.headers.get('content-disposition') || response.headers.get('Content-Disposition') || '';
           let filename = 'remediated-document.docx'; // default
-          
+
           if (contentDisposition) {
-            const matches = /filename="([^"]+)"/.exec(contentDisposition);
-            if (matches && matches[1]) {
-              filename = matches[1];
+            // Try filename*=UTF-8''name.docx first
+            const fstar = contentDisposition.match(/filename\*=[^']*''([^;\n\r]+)/i);
+            if (fstar && fstar[1]) {
+              try {
+                filename = decodeURIComponent(fstar[1]);
+              } catch (e) {
+                filename = fstar[1];
+              }
+            } else {
+              const matches = /filename=\s*"?([^";]+)"?/i.exec(contentDisposition);
+              if (matches && matches[1]) filename = matches[1];
             }
           }
-          
+
           // Store the filename for display purposes
           this.downloadFileName = filename;
 
-          // Update the "fixed" counter after successful download
-          // The download endpoint actually performs the fixes, so we update the counter
-          // to reflect that all flagged items that could be fixed are now fixed
-          if (this.remediation?.report?.summary) {
-            // Move all auto-fixable items from flagged to fixed
-            const autoFixableCount = this.countAutoFixableIssues();
-            this.remediation.report.summary.fixed += autoFixableCount;
-            this.remediation.report.summary.flagged -= autoFixableCount;
-            
-            // Ensure flagged doesn't go negative
-            if (this.remediation.report.summary.flagged < 0) {
-              this.remediation.report.summary.flagged = 0;
-            }
-          }
-          
+          // Note: do not mutate the server-provided summary here. The UI shows a
+          // client-estimated auto-fix count with `countAutoFixableIssues()` and
+          // we perform an authoritative re-check immediately after download that
+          // replaces the report with the server's post-remediation response.
+
           // Create download link with the correct filename
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -360,14 +612,61 @@ export class DashboardComponent {
           a.download = filename; // Use the filename from the header
           a.click();
           URL.revokeObjectURL(url);
+
+          // If the original report said the document was protected, show a post-download banner
+          // with alternatives and a button to open the unblock help modal.
+          if (this.remediation?.report?.details?.documentProtected) {
+            this.showPostDownloadBanner = true;
+          }
+
+          // Authoritative re-check: send the downloaded blob back to the upload analysis endpoint
+          // so the UI shows the exact server-side post-remediation report (avoids client heuristics).
+          try {
+            const analysisUrl = `${environment.apiUrl}${environment.uploadEndpoint}`;
+            const reForm = new FormData();
+            // Append blob as a file; use the filename determined above so server sees correct name
+            reForm.append('file', blob, filename);
+
+            this.http.post(analysisUrl, reForm).subscribe({
+              next: (resp: any) => {
+                // Replace remediation with authoritative server response and re-render issues
+                try {
+                  const res = resp as DocxRemediationResponse;
+                  if (res && res.report) {
+                    this.remediation = res;
+                    this.fileName = res.suggestedFileName ? res.suggestedFileName : filename;
+                    this.issues = this.flattenIssues(res);
+                    // Hide post-download banner if server confirms protection removed
+                    if (!this.remediation.report.details?.documentProtected) {
+                      this.showPostDownloadBanner = false;
+                    }
+                  }
+                } catch (e) {
+                  console.warn('Failed to parse authoritative report', e);
+                }
+              },
+              error: (err) => {
+                console.warn('Authoritative re-check failed', err);
+                // keep existing remediation but surface a message
+                this.issues = [
+                  { type: 'flagged', message: `Could not refresh authoritative report: ${err?.message || err?.statusText || 'error'}` },
+                ];
+              },
+            });
+          } catch (e) {
+            console.warn('Authoritative re-check error', e);
+          }
         },
         error: (err) => {
           console.error('Download failed', err);
+          this.issues = [
+            { type: 'flagged', message: `Download failed: ${err?.error?.message || err.statusText || err.message || 'Unknown error'}` },
+          ];
         },
       });
   }
 
-  private countAutoFixableIssues(): number {
+  countAutoFixableIssues(): number {
     // Count issues that the backend automatically fixes during download/remediation
     // These are the same issues that show "fixed" status but weren't counted yet
     if (!this.remediation?.report?.details) return 0;
@@ -380,6 +679,33 @@ export class DashboardComponent {
     if (d.fileNameNeedsFixing && !d.fileNameFixed) count++; // Filename fix
     if (d.tablesHeaderRowSet?.length) count += d.tablesHeaderRowSet.length; // Table headers
     if (d.languageDefaultIssue && !d.languageDefaultFixed) count++; // Language fix
+  // New backend auto-fixes
+  const tsCount = this.getTextShadowsCount(d);
+  if (tsCount > 0) count += tsCount;
+    // Prefer fontSizesNormalized when present, otherwise count fontsNormalized.
+    if (d.fontSizesNormalized) {
+      if (typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns)
+        count += (d.fontSizesNormalized as any).adjustedRuns;
+      else count++;
+    } else if (d.fontsNormalized) {
+      if (typeof d.fontsNormalized === 'object' && d.fontsNormalized.replaced)
+        count += d.fontsNormalized.replaced;
+      else count++;
+    }
+    if (d.minFontSizeEnforced) {
+      if (typeof d.minFontSizeEnforced === 'object' && d.minFontSizeEnforced.adjustedRuns)
+        count += d.minFontSizeEnforced.adjustedRuns;
+      else count++;
+    }
+    
+    // Line spacing fixes
+    if (d.lineSpacingFixed) {
+      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
+        count += d.lineSpacingFixed.adjustedParagraphs;
+      } else {
+        count++;
+      }
+    }
     
     return count;
   }

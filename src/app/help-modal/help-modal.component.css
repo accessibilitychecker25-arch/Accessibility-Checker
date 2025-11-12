@@ -1,0 +1,12 @@
+.help-modal-backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.help-modal {
+  max-width: 36rem;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

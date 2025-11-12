@@ -6,6 +6,7 @@
       type="file"
       id="fileInput"
       class="sr-only"
+      multiple
       [attr.accept]="
         '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       "
@@ -17,7 +18,7 @@
       class="text-sm px-3 py-1 rounded bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 transition"
       (click)="triggerFileDialog()"
     >
-      {{ selectedFile ? selectedFile.name : "Choose File" }}
+      {{ selectedFiles.length ? (selectedFiles.length === 1 ? selectedFiles[0].name : (selectedFiles.length + ' files selected')) : 'Choose File' }}
     </button>
   </div>
 

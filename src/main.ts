@@ -7,6 +7,7 @@ import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideHttpClient } from '@angular/common/http';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBhW7HnnVFVO-4XFaJLk8mR7ymbxWhkTH4',
@@ -21,6 +22,7 @@ const firebaseConfig = {
 bootstrapApplication(AppComponent, {
   providers: [
     provideAnimations(),
+    provideHttpClient(),
     provideRouter(appRoutes),
     provideFirebaseApp(() => initializeApp(firebaseConfig)),
     provideFirestore(() => getFirestore()),

@@ -17,10 +17,13 @@ import { CommonModule } from '@angular/common';
 })
 export class FileUploadComponent {
   @Output() submitted = new EventEmitter<{ file: File; title: string }>();
+  // New event for multiple-file submissions
+  @Output() submittedMultiple = new EventEmitter<File[]>();
   @Output() cleared = new EventEmitter<void>();
   @Input() hasResults = false;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   selectedFile?: File;
+  selectedFiles: File[] = [];
 
   // Reset file input value to allow reselecting the same file
   resetNativeInputValue() {
@@ -46,10 +49,10 @@ export class FileUploadComponent {
   // Handle file selection
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file && this.isValidFile(file)) {
-      this.selectedFile = file;
-    }
+    const files = input.files ? Array.from(input.files) : [];
+    const valid = files.filter((f) => this.isValidFile(f));
+    this.selectedFiles = valid;
+    this.selectedFile = valid[0];
   }
 
   // Check if the selected file is valid (DOCX)
@@ -63,12 +66,17 @@ export class FileUploadComponent {
   // Submit the file
   submit() {
     if (!this.isFormValid()) return;
-    this.submitted.emit({ file: this.selectedFile!, title: '' });
+    if (this.selectedFiles.length > 1) {
+      this.submittedMultiple.emit(this.selectedFiles.slice());
+    } else {
+      this.submitted.emit({ file: this.selectedFile!, title: '' });
+    }
     this.selectedFile = undefined;
+    this.selectedFiles = [];
   }
 
   // Validate if a file is selected
   isFormValid(): boolean {
-    return !!this.selectedFile; // Only check if a file is selected
+    return this.selectedFiles && this.selectedFiles.length > 0; // At least one file selected
   }
 }
