@@ -43,14 +43,34 @@ interface DocxRemediationResponse {
       // DETECT-ONLY (names changed)
       fileNameNeedsFixing: boolean;
       titleNeedsFixing?: boolean;
-      lineSpacingNeedsFixing?: boolean | Array<{
-        paragraphIndex: number;
-        page?: number;
-        section?: string;
-        preview?: string;
-      }>;
+      lineSpacingNeedsFixing?: boolean;
       fontTypeNeedsFixing?: boolean;
       fontSizeNeedsFixing?: boolean;
+      // Location details are provided in separate arrays
+      lineSpacingLocations?: Array<{
+        type: string;
+        currentSpacing: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+      }>;
+      fontTypeLocations?: Array<{
+        type: string;
+        font: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+      }>;
+      fontSizeLocations?: Array<{
+        type: string;
+        size: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+      }>;
       emptyHeadings?: Array<{ paragraphIndex: number }>;
       headingOrderIssues?: Array<{
         paragraphIndex: number;
@@ -405,12 +425,13 @@ export class DashboardComponent {
       let message = 'Line spacing needs to be at least 1.5 for improved readability (flagged for your attention).';
       
       // If detailed location information is available, include it
-      if (Array.isArray(d.lineSpacingNeedsFixing)) {
-        const locations = d.lineSpacingNeedsFixing.map(item => {
-          let location = `Paragraph ${item.paragraphIndex}`;
-          if (item.page) location += ` (Page ~${item.page})`;
-          if (item.section) location += ` under "${item.section}"`;
+      if (d.lineSpacingLocations && d.lineSpacingLocations.length > 0) {
+        const locations = d.lineSpacingLocations.map(item => {
+          let location = item.location;
+          if (item.approximatePage) location += ` (Page ~${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` in ${item.context}`;
           if (item.preview) location += `: "${item.preview.substring(0, 50)}..."`;
+          if (item.currentSpacing) location += ` (Current: ${item.currentSpacing})`;
           return location;
         }).join('\n- ');
         
@@ -424,16 +445,48 @@ export class DashboardComponent {
     }
     
     if (d.fontTypeNeedsFixing) {
+      let message = 'Font types should be Arial/sans-serif for better accessibility (flagged for your attention).';
+      
+      // If detailed location information is available, include it
+      if (d.fontTypeLocations && d.fontTypeLocations.length > 0) {
+        const locations = d.fontTypeLocations.map(item => {
+          let location = item.location;
+          if (item.approximatePage) location += ` (Page ~${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` in ${item.context}`;
+          if (item.preview) location += `: "${item.preview.substring(0, 50)}..."`;
+          if (item.font) location += ` (Current font: ${item.font})`;
+          return location;
+        }).join('\n- ');
+        
+        message += `\n\nFont type issues found in:\n- ${locations}`;
+      }
+      
       out.push({
         type: 'flagged',
-        message: 'Font types should be Arial/sans-serif for better accessibility (flagged for your attention).',
+        message: message,
       });
     }
     
     if (d.fontSizeNeedsFixing) {
+      let message = 'Font sizes should be consistent and appropriately sized (flagged for your attention).';
+      
+      // If detailed location information is available, include it
+      if (d.fontSizeLocations && d.fontSizeLocations.length > 0) {
+        const locations = d.fontSizeLocations.map(item => {
+          let location = item.location;
+          if (item.approximatePage) location += ` (Page ~${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` in ${item.context}`;
+          if (item.preview) location += `: "${item.preview.substring(0, 50)}..."`;
+          if (item.size) location += ` (Current size: ${item.size})`;
+          return location;
+        }).join('\n- ');
+        
+        message += `\n\nFont size issues found in:\n- ${locations}`;
+      }
+      
       out.push({
         type: 'flagged',
-        message: 'Font sizes should be consistent and appropriately sized (flagged for your attention).',
+        message: message,
       });
     }
     
