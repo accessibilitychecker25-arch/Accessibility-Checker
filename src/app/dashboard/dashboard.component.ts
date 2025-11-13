@@ -46,6 +46,7 @@ interface DocxRemediationResponse {
       lineSpacingNeedsFixing?: boolean;
       fontTypeNeedsFixing?: boolean;
       fontSizeNeedsFixing?: boolean;
+      linkNamesNeedImprovement?: boolean;
       // Location details are provided in separate arrays
       lineSpacingLocations?: Array<{
         type: string;
@@ -106,6 +107,16 @@ interface DocxRemediationResponse {
         imagePath?: string;
         preview?: string;
         altText?: string;
+      }>;
+      // Link locations provided in separate array
+      linkLocations?: Array<{
+        type: string;
+        linkText: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+        recommendation: string;
       }>;
       anchoredDrawingsDetected?: number;
       embeddedMedia?: Array<{ id: string; target: string; type: string }>;
@@ -485,6 +496,36 @@ export class DashboardComponent {
         }).join('\n\n');
         
         message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Font Size Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
+      }
+      
+      out.push({
+        type: 'flagged',
+        message: message,
+      });
+    }
+    
+    if (d.linkNamesNeedImprovement) {
+      let message = 'Link names are descriptive (flagged for your attention).';
+      
+      // If detailed location information is available, include it
+      if (d.linkLocations && d.linkLocations.length > 0) {
+        const count = d.linkLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
+        
+        const locationDetails = d.linkLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.type) location += ` • Type: ${item.type}`;
+          if (item.linkText) location += ` • Current text: "${item.linkText}"`;
+          if (item.recommendation) location += ` • Recommendation: ${item.recommendation}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Link Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
       }
       
       out.push({
