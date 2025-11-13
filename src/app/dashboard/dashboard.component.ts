@@ -141,6 +141,16 @@ interface DocxRemediationResponse {
       anchoredDrawingsDetected?: number;
       embeddedMedia?: Array<{ id: string; target: string; type: string }>;
       gifsDetected?: string[];
+      // GIF/Flashing object locations provided in separate array
+      gifLocations?: Array<{
+        type: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+        recommendation: string;
+        filePath?: string;
+      }>;
       colorContrastIssues?: Array<{
         paragraphIndex: number;
         color: string;
@@ -729,11 +739,35 @@ export class DashboardComponent {
         message: `${d.embeddedMedia.length} embedded media item(s) detected. Ensure captions or transcripts are provided for accessibility.`,
       });
 
-    if (d.gifsDetected?.length)
+    if (d.gifsDetected?.length) {
+      let message = `${d.gifsDetected.length} GIF(s) detected. Verify that none of them contain flashing content, which can cause accessibility issues.`;
+      
+      // If detailed location information is available, include it
+      if (d.gifLocations && d.gifLocations.length > 0) {
+        const count = d.gifLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
+        
+        const locationDetails = d.gifLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.type) location += ` • Type: ${item.type}`;
+          if (item.filePath) location += ` • File: ${item.filePath}`;
+          if (item.recommendation) location += ` • Recommendation: ${item.recommendation}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} GIF Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
+      }
+      
       out.push({
         type: 'flagged',
-        message: `${d.gifsDetected.length} GIF(s) detected. Verify that none of them contain flashing content, which can cause accessibility issues.`,
+        message: message,
       });
+    }
 
     if (d.colorContrastIssues?.length)
       out.push({
