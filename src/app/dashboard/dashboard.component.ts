@@ -919,4 +919,16 @@ export class DashboardComponent {
     
     return count;
   }
+
+  // Count actual flagged issues as displayed to the user (forms count as 1 regardless of locations)
+  getFlaggedCount(): number {
+    if (!this.issues) return 0;
+    return this.issues.filter(issue => issue.type === 'flagged').length;
+  }
+
+  // Count actual fixed issues as displayed to the user
+  getFixedCount(): number {
+    if (!this.issues) return 0;
+    return this.issues.filter(issue => issue.type === 'fixed').length;
+  }
 }

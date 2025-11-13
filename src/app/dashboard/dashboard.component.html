@@ -61,11 +61,11 @@
 
       <div class="flex space-x-4 mb-4">
         <span class="text-green-500 dark:text-green-400 font-medium">
-          Fixed: {{ remediation.report.summary.fixed }}
+          Fixed: {{ getFixedCount() }}
         </span>
         <span class="self-center text-sm text-gray-700 dark:text-gray-300">(client-estimated auto-fixes: {{ countAutoFixableIssues() }})</span>
         <span class="text-yellow-500 dark:text-yellow-400 font-medium">
-          Flagged: {{ remediation.report.summary.flagged }}
+          Flagged: {{ getFlaggedCount() }}
         </span>
       </div>
 
