@@ -98,6 +98,15 @@ interface DocxRemediationResponse {
         description?: string;
         altText?: string;
       }>;
+      // Image locations provided in separate array  
+      imageLocations?: Array<{
+        location: string;
+        approximatePage: number;
+        context: string;
+        imagePath?: string;
+        preview?: string;
+        altText?: string;
+      }>;
       anchoredDrawingsDetected?: number;
       embeddedMedia?: Array<{ id: string; target: string; type: string }>;
       gifsDetected?: string[];
@@ -573,35 +582,33 @@ export class DashboardComponent {
         message: `The header/footer contains content. Consider duplicating key information within the document body for better accessibility.`,
       });
 
-    if (d.imagesMissingOrBadAlt) {
-      let message = '';
-      let count = 0;
+    if (d.imagesMissingOrBadAlt && (typeof d.imagesMissingOrBadAlt === 'number' && d.imagesMissingOrBadAlt > 0)) {
+      let message = `${d.imagesMissingOrBadAlt} image(s) are missing or have poor alt text. Alt text should describe the content and purpose of the image for accessibility.`;
       
-      if (typeof d.imagesMissingOrBadAlt === 'number') {
-        // Backward compatibility: simple count format
-        count = d.imagesMissingOrBadAlt;
-        message = `${count} image(s) are missing or have poor alt text. Alt text should describe the content and purpose of the image for accessibility.`;
-      } else if (Array.isArray(d.imagesMissingOrBadAlt)) {
-        // New detailed format with locations
-        count = d.imagesMissingOrBadAlt.length;
-        const locations = d.imagesMissingOrBadAlt.map(item => {
-          let location = `Image ${item.imageIndex}`;
-          if (item.page) location += ` (Page ~${item.page})`;
-          if (item.section) location += ` under "${item.section}"`;
-          if (item.description) location += `: ${item.description}`;
-          if (item.altText) location += ` (Current alt: "${item.altText}")`;
-          return location;
-        }).join('\n- ');
+      // If detailed location information is available, include it
+      if (d.imageLocations && d.imageLocations.length > 0) {
+        const count = d.imageLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
         
-        message = `${count} image(s) are missing or have poor alt text. Alt text should describe the content and purpose of the image for accessibility.\n\nImage issues found in:\n- ${locations}`;
+        const locationDetails = d.imageLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.imagePath) location += ` • File: ${item.imagePath}`;
+          if (item.altText) location += ` • Current alt: "${item.altText}"`;
+          if (item.preview && item.preview !== 'No surrounding text') {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Image Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
       }
       
-      if (count > 0) {
-        out.push({
-          type: 'flagged',
-          message: message,
-        });
-      }
+      out.push({
+        type: 'flagged',
+        message: message,
+      });
     }
 
     if (
