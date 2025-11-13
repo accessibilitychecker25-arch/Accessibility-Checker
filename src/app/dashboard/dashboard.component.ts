@@ -43,6 +43,9 @@ interface DocxRemediationResponse {
       // DETECT-ONLY (names changed)
       fileNameNeedsFixing: boolean;
       titleNeedsFixing?: boolean;
+      lineSpacingNeedsFixing?: boolean;
+      fontTypeNeedsFixing?: boolean;
+      fontSizeNeedsFixing?: boolean;
       emptyHeadings?: Array<{ paragraphIndex: number }>;
       headingOrderIssues?: Array<{
         paragraphIndex: number;
@@ -136,10 +139,7 @@ export class DashboardComponent {
       else items.push(`${tsCount} text shadow(s) removed`);
     }
     
-    // Handle both font flags separately to avoid duplicates
-    if (d.fontsNormalized) {
-      items.push('Fonts normalized to sans-serif');
-    }
+    // Only show font size normalization as fixed (not font type or line spacing)
     if (d.fontSizesNormalized) {
       items.push('Font sizes normalized for consistency');
     }
@@ -147,14 +147,7 @@ export class DashboardComponent {
     const minFontMsg = this.getMinFontSizeMessage(d);
     if (minFontMsg) items.push(minFontMsg);
     
-    // Line spacing fixes
-    if (d.lineSpacingFixed) {
-      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
-        items.push(`Line spacing fixed for ${d.lineSpacingFixed.adjustedParagraphs} paragraph(s)`);
-      } else {
-        items.push('Line spacing fixed for readability (minimum 1.5)');
-      }
-    }
+    // Note: Line spacing and font types are now flagged for user action, not auto-fixed
 
     return items;
   }
@@ -177,11 +170,7 @@ export class DashboardComponent {
         return `${(details.fontSizesNormalized as any).adjustedRuns} font size run(s) normalized`;
       return 'Font sizes normalized for consistency';
     }
-    if (details.fontsNormalized) {
-      if (typeof details.fontsNormalized === 'object' && (details.fontsNormalized as any).replaced)
-        return `${(details.fontsNormalized as any).replaced} font run(s) normalized to sans-serif`;
-      return 'Fonts normalized to sans-serif';
-    }
+    // Font types are now flagged for user action, not auto-fixed
     return null;
   }
 
@@ -385,24 +374,7 @@ export class DashboardComponent {
             : `${tsCountFlat} text shadow style(s) were removed for improved readability.`,
       });
 
-    // Handle both font flags separately - show both when present
-    if (d.fontsNormalized) {
-      // If the backend includes additional metadata about the normalization target,
-      // include that in the detail message (e.g. normalized to 'Arial' or 'sans-serif').
-      const fn = d.fontsNormalized as any;
-      let targetLabel = '';
-      if (fn && typeof fn === 'object') {
-        targetLabel = fn.to || fn.normalizedTo || fn.targetFont || fn.font || fn.family || '';
-        if (targetLabel) targetLabel = ` to ${targetLabel}`;
-      }
-      out.push({
-        type: 'fixed',
-        message:
-          typeof fn === 'object' && fn.replaced
-            ? `${fn.replaced} font run(s) were normalized${targetLabel || ' to a sans-serif font'}.`
-            : `Fonts were normalized${targetLabel || ' to a sans-serif font'} for better accessibility.`,
-      });
-    }
+    // Font types are now flagged for user action, not auto-fixed
     
     if (d.fontSizesNormalized) {
       out.push({
@@ -417,15 +389,25 @@ export class DashboardComponent {
     const minFontMsgFlat = this.getMinFontSizeMessage(d);
     if (minFontMsgFlat) out.push({ type: 'fixed', message: minFontMsgFlat.includes('adjusted') ? minFontMsgFlat.replace('adjusted to min font size', 'enforced to') : minFontMsgFlat.replace('Minimum font size enforced', 'Minimum font size enforced to') });
     
-    // Line spacing fixes
-    if (d.lineSpacingFixed) {
-      let lineSpacingMessage = 'Line spacing has been adjusted to at least 1.5 for improved readability.';
-      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
-        lineSpacingMessage = `Line spacing was adjusted for ${d.lineSpacingFixed.adjustedParagraphs} paragraph(s) to meet the minimum 1.5 requirement for readability.`;
-      }
+    // Line spacing and font type are now flagged for user action
+    if (d.lineSpacingNeedsFixing) {
       out.push({
-        type: 'fixed',
-        message: lineSpacingMessage,
+        type: 'flagged',
+        message: 'Line spacing needs to be at least 1.5 for improved readability (flagged for your attention).',
+      });
+    }
+    
+    if (d.fontTypeNeedsFixing) {
+      out.push({
+        type: 'flagged',
+        message: 'Font types should be Arial/sans-serif for better accessibility (flagged for your attention).',
+      });
+    }
+    
+    if (d.fontSizeNeedsFixing) {
+      out.push({
+        type: 'flagged',
+        message: 'Font sizes should be consistent and appropriately sized (flagged for your attention).',
       });
     }
     
@@ -694,30 +676,20 @@ export class DashboardComponent {
   // New backend auto-fixes
   const tsCount = this.getTextShadowsCount(d);
   if (tsCount > 0) count += tsCount;
-    // Prefer fontSizesNormalized when present, otherwise count fontsNormalized.
+    // Only count font size normalization (not font type or line spacing - those are now flagged)
     if (d.fontSizesNormalized) {
       if (typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns)
         count += (d.fontSizesNormalized as any).adjustedRuns;
       else count++;
-    } else if (d.fontsNormalized) {
-      if (typeof d.fontsNormalized === 'object' && d.fontsNormalized.replaced)
-        count += d.fontsNormalized.replaced;
-      else count++;
     }
+    
     if (d.minFontSizeEnforced) {
       if (typeof d.minFontSizeEnforced === 'object' && d.minFontSizeEnforced.adjustedRuns)
         count += d.minFontSizeEnforced.adjustedRuns;
       else count++;
     }
     
-    // Line spacing fixes
-    if (d.lineSpacingFixed) {
-      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
-        count += d.lineSpacingFixed.adjustedParagraphs;
-      } else {
-        count++;
-      }
-    }
+    // Note: Line spacing and font types are now flagged for user action, not auto-fixed
     
     return count;
   }
