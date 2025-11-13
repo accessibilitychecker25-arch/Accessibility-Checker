@@ -124,12 +124,13 @@
 
       <h4 class="text-lg mb-2">Details</h4>
       <ul *ngIf="issues.length; else noIssues">
-        <li *ngFor="let i of issues" class="mb-2">
-          <span
-            [class]="'• ' + (i.type === 'fixed' ? 'text-green-500 dark:text-green-400' : i.type === 'flagged' ? 'text-yellow-500 dark:text-yellow-400' : '')"
+        <li *ngFor="let i of issues" class="mb-4">
+          <div
+            [class]="i.type === 'fixed' ? 'text-green-500 dark:text-green-400' : i.type === 'flagged' ? 'text-yellow-500 dark:text-yellow-400' : ''"
           >
-            {{ i.message }}
-          </span>
+            <span class="mr-2">•</span>
+            <span [innerHTML]="i.message"></span>
+          </div>
         </li>
       </ul>
       <ng-template #noIssues

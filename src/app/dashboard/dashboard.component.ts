@@ -426,16 +426,21 @@ export class DashboardComponent {
       
       // If detailed location information is available, include it
       if (d.lineSpacingLocations && d.lineSpacingLocations.length > 0) {
-        const locations = d.lineSpacingLocations.map(item => {
-          let location = item.location;
-          if (item.approximatePage) location += ` (Page ~${item.approximatePage})`;
-          if (item.context && item.context !== 'Document body') location += ` in ${item.context}`;
-          if (item.preview) location += `: "${item.preview.substring(0, 50)}..."`;
-          if (item.currentSpacing) location += ` (Current: ${item.currentSpacing})`;
-          return location;
-        }).join('\n- ');
+        const count = d.lineSpacingLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
         
-        message += `\n\nLine spacing issues found in:\n- ${locations}`;
+        const locationDetails = d.lineSpacingLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.currentSpacing) location += ` • Current: ${item.currentSpacing}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Line Spacing Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
       }
       
       out.push({
@@ -449,16 +454,21 @@ export class DashboardComponent {
       
       // If detailed location information is available, include it
       if (d.fontTypeLocations && d.fontTypeLocations.length > 0) {
-        const locations = d.fontTypeLocations.map(item => {
-          let location = item.location;
-          if (item.approximatePage) location += ` (Page ~${item.approximatePage})`;
-          if (item.context && item.context !== 'Document body') location += ` in ${item.context}`;
-          if (item.preview) location += `: "${item.preview.substring(0, 50)}..."`;
-          if (item.font) location += ` (Current font: ${item.font})`;
-          return location;
-        }).join('\n- ');
+        const count = d.fontTypeLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
         
-        message += `\n\nFont type issues found in:\n- ${locations}`;
+        const locationDetails = d.fontTypeLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.font) location += ` • Current: ${item.font}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Font Type Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
       }
       
       out.push({
@@ -472,16 +482,21 @@ export class DashboardComponent {
       
       // If detailed location information is available, include it
       if (d.fontSizeLocations && d.fontSizeLocations.length > 0) {
-        const locations = d.fontSizeLocations.map(item => {
-          let location = item.location;
-          if (item.approximatePage) location += ` (Page ~${item.approximatePage})`;
-          if (item.context && item.context !== 'Document body') location += ` in ${item.context}`;
-          if (item.preview) location += `: "${item.preview.substring(0, 50)}..."`;
-          if (item.size) location += ` (Current size: ${item.size})`;
-          return location;
-        }).join('\n- ');
+        const count = d.fontSizeLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
         
-        message += `\n\nFont size issues found in:\n- ${locations}`;
+        const locationDetails = d.fontSizeLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.size) location += ` • Current: ${item.size}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Font Size Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
       }
       
       out.push({
