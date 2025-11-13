@@ -43,7 +43,12 @@ interface DocxRemediationResponse {
       // DETECT-ONLY (names changed)
       fileNameNeedsFixing: boolean;
       titleNeedsFixing?: boolean;
-      lineSpacingNeedsFixing?: boolean;
+      lineSpacingNeedsFixing?: boolean | Array<{
+        paragraphIndex: number;
+        page?: number;
+        section?: string;
+        preview?: string;
+      }>;
       fontTypeNeedsFixing?: boolean;
       fontSizeNeedsFixing?: boolean;
       emptyHeadings?: Array<{ paragraphIndex: number }>;
@@ -66,7 +71,13 @@ interface DocxRemediationResponse {
         target?: string;
       }>;
       headerFooterAudit?: Array<{ part: string; preview: string }>;
-      imagesMissingOrBadAlt?: number;
+      imagesMissingOrBadAlt?: number | Array<{
+        imageIndex: number;
+        page?: number;
+        section?: string;
+        description?: string;
+        altText?: string;
+      }>;
       anchoredDrawingsDetected?: number;
       embeddedMedia?: Array<{ id: string; target: string; type: string }>;
       gifsDetected?: string[];
@@ -391,9 +402,24 @@ export class DashboardComponent {
     
     // Line spacing and font type are now flagged for user action
     if (d.lineSpacingNeedsFixing) {
+      let message = 'Line spacing needs to be at least 1.5 for improved readability (flagged for your attention).';
+      
+      // If detailed location information is available, include it
+      if (Array.isArray(d.lineSpacingNeedsFixing)) {
+        const locations = d.lineSpacingNeedsFixing.map(item => {
+          let location = `Paragraph ${item.paragraphIndex}`;
+          if (item.page) location += ` (Page ~${item.page})`;
+          if (item.section) location += ` under "${item.section}"`;
+          if (item.preview) location += `: "${item.preview.substring(0, 50)}..."`;
+          return location;
+        }).join('\n- ');
+        
+        message += `\n\nLine spacing issues found in:\n- ${locations}`;
+      }
+      
       out.push({
         type: 'flagged',
-        message: 'Line spacing needs to be at least 1.5 for improved readability (flagged for your attention).',
+        message: message,
       });
     }
     
@@ -479,14 +505,36 @@ export class DashboardComponent {
         message: `The header/footer contains content. Consider duplicating key information within the document body for better accessibility.`,
       });
 
-    if (
-      typeof d.imagesMissingOrBadAlt === 'number' &&
-      d.imagesMissingOrBadAlt > 0
-    )
-      out.push({
-        type: 'flagged',
-        message: `${d.imagesMissingOrBadAlt} image(s) are missing or have poor alt text. Alt text should describe the content and purpose of the image for accessibility.`,
-      });
+    if (d.imagesMissingOrBadAlt) {
+      let message = '';
+      let count = 0;
+      
+      if (typeof d.imagesMissingOrBadAlt === 'number') {
+        // Backward compatibility: simple count format
+        count = d.imagesMissingOrBadAlt;
+        message = `${count} image(s) are missing or have poor alt text. Alt text should describe the content and purpose of the image for accessibility.`;
+      } else if (Array.isArray(d.imagesMissingOrBadAlt)) {
+        // New detailed format with locations
+        count = d.imagesMissingOrBadAlt.length;
+        const locations = d.imagesMissingOrBadAlt.map(item => {
+          let location = `Image ${item.imageIndex}`;
+          if (item.page) location += ` (Page ~${item.page})`;
+          if (item.section) location += ` under "${item.section}"`;
+          if (item.description) location += `: ${item.description}`;
+          if (item.altText) location += ` (Current alt: "${item.altText}")`;
+          return location;
+        }).join('\n- ');
+        
+        message = `${count} image(s) are missing or have poor alt text. Alt text should describe the content and purpose of the image for accessibility.\n\nImage issues found in:\n- ${locations}`;
+      }
+      
+      if (count > 0) {
+        out.push({
+          type: 'flagged',
+          message: message,
+        });
+      }
+    }
 
     if (
       typeof d.anchoredDrawingsDetected === 'number' &&
