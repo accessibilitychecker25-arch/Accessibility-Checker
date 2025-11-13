@@ -505,14 +505,19 @@ export class DashboardComponent {
     }
     
     if (d.linkNamesNeedImprovement) {
-      let message = 'Link names are descriptive (flagged for your attention).';
+      let message = 'Link names are not descriptive (flagged for your attention).';
       
       // If detailed location information is available, include it
       if (d.linkLocations && d.linkLocations.length > 0) {
-        const count = d.linkLocations.length;
+        // Remove duplicates based on location and linkText
+        const uniqueLocations = d.linkLocations.filter((item, index, self) =>
+          index === self.findIndex(t => t.location === item.location && t.linkText === item.linkText)
+        );
+        
+        const count = uniqueLocations.length;
         message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
         
-        const locationDetails = d.linkLocations.map((item, index) => {
+        const locationDetails = uniqueLocations.map((item, index) => {
           let location = `${index + 1}. ${item.location}`;
           if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
           if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
