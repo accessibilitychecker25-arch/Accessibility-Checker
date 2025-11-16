@@ -10,6 +10,15 @@ module.exports = {
         primary: '#0ea5e9',    // sky-500
         'auburn-blue': '#003366', // Auburn University Navy Blue
         'auburn-orange': '#DD550C', // Auburn University Orange
+        green: {
+          400: '#22C55E', // Dark mode green
+          500: '#16833E', // Light mode green
+        },
+        yellow: {
+          50: '#FEFCE8',   // Default Tailwind yellow-50 - light yellow backgrounds
+          400: '#EAB308',  // Dark mode yellow
+          500: '#846506', // Light mode yellow
+        },
       },
     },
   },

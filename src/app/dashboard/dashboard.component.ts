@@ -43,6 +43,41 @@ interface DocxRemediationResponse {
       // DETECT-ONLY (names changed)
       fileNameNeedsFixing: boolean;
       titleNeedsFixing?: boolean;
+      lineSpacingNeedsFixing?: boolean;
+      fontTypeNeedsFixing?: boolean;
+      fontSizeNeedsFixing?: boolean;
+      linkNamesNeedImprovement?: boolean;
+      formsDetected?: boolean;
+      flashingObjectsDetected?: boolean;
+      inlineContentFixed?: boolean;
+      inlineContentCount?: number;
+      inlineContentExplanation?: string;
+      inlineContentCategory?: string;
+      // Location details are provided in separate arrays
+      lineSpacingLocations?: Array<{
+        type: string;
+        currentSpacing: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+      }>;
+      fontTypeLocations?: Array<{
+        type: string;
+        font: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+      }>;
+      fontSizeLocations?: Array<{
+        type: string;
+        size: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+      }>;
       emptyHeadings?: Array<{ paragraphIndex: number }>;
       headingOrderIssues?: Array<{
         paragraphIndex: number;
@@ -63,10 +98,70 @@ interface DocxRemediationResponse {
         target?: string;
       }>;
       headerFooterAudit?: Array<{ part: string; preview: string }>;
-      imagesMissingOrBadAlt?: number;
+      imagesMissingOrBadAlt?: number | Array<{
+        imageIndex: number;
+        page?: number;
+        section?: string;
+        description?: string;
+        altText?: string;
+      }>;
+      // Image locations provided in separate array  
+      imageLocations?: Array<{
+        location: string;
+        approximatePage: number;
+        context: string;
+        imagePath?: string;
+        preview?: string;
+        altText?: string;
+      }>;
+      // Link locations provided in separate array
+      linkLocations?: Array<{
+        type: string;
+        linkText: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+        recommendation: string;
+      }>;
+      // Form locations provided in separate array
+      formLocations?: Array<{
+        type: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+        recommendation: string;
+      }>;
+      // Flashing object locations provided in separate array
+      flashingObjectLocations?: Array<{
+        type: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+        recommendation: string;
+      }>;
       anchoredDrawingsDetected?: number;
       embeddedMedia?: Array<{ id: string; target: string; type: string }>;
       gifsDetected?: string[];
+      // GIF/Flashing object locations provided in separate array
+      gifLocations?: Array<{
+        type: string;
+        location: string;
+        approximatePage: number;
+        context: string;
+        preview: string;
+        recommendation: string;
+        filePath?: string;
+      }>;
+      // Inline content positioning details
+      inlineContentDetails?: Array<{
+        type: string;
+        description: string;
+        originalContent?: string;
+        fixedContent?: string;
+      }>;
       colorContrastIssues?: Array<{
         paragraphIndex: number;
         color: string;
@@ -136,10 +231,7 @@ export class DashboardComponent {
       else items.push(`${tsCount} text shadow(s) removed`);
     }
     
-    // Handle both font flags separately to avoid duplicates
-    if (d.fontsNormalized) {
-      items.push('Fonts normalized to sans-serif');
-    }
+    // Only show font size normalization as fixed (not font type or line spacing)
     if (d.fontSizesNormalized) {
       items.push('Font sizes normalized for consistency');
     }
@@ -147,14 +239,7 @@ export class DashboardComponent {
     const minFontMsg = this.getMinFontSizeMessage(d);
     if (minFontMsg) items.push(minFontMsg);
     
-    // Line spacing fixes
-    if (d.lineSpacingFixed) {
-      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
-        items.push(`Line spacing fixed for ${d.lineSpacingFixed.adjustedParagraphs} paragraph(s)`);
-      } else {
-        items.push('Line spacing fixed for readability (minimum 1.5)');
-      }
-    }
+    // Note: Line spacing and font types are now flagged for user action, not auto-fixed
 
     return items;
   }
@@ -177,11 +262,7 @@ export class DashboardComponent {
         return `${(details.fontSizesNormalized as any).adjustedRuns} font size run(s) normalized`;
       return 'Font sizes normalized for consistency';
     }
-    if (details.fontsNormalized) {
-      if (typeof details.fontsNormalized === 'object' && (details.fontsNormalized as any).replaced)
-        return `${(details.fontsNormalized as any).replaced} font run(s) normalized to sans-serif`;
-      return 'Fonts normalized to sans-serif';
-    }
+    // Font types are now flagged for user action, not auto-fixed
     return null;
   }
 
@@ -348,6 +429,18 @@ export class DashboardComponent {
     this.progress = 0;
     this.fileName = '';
     this.downloadFileName = '';
+    this.processedReports = []; // Clear all processed reports
+  }
+
+  // Remove individual report
+  removeReport(index: number) {
+    this.processedReports.splice(index, 1);
+    
+    // If we removed the currently selected report, clear the view
+    if (this.remediation && this.processedReports.length === 0) {
+      this.remediation = undefined;
+      this.issues = [];
+    }
   }
 
   private flattenIssues(res: DocxRemediationResponse): RemediationIssue[] {
@@ -373,24 +466,7 @@ export class DashboardComponent {
             : `${tsCountFlat} text shadow style(s) were removed for improved readability.`,
       });
 
-    // Handle both font flags separately - show both when present
-    if (d.fontsNormalized) {
-      // If the backend includes additional metadata about the normalization target,
-      // include that in the detail message (e.g. normalized to 'Arial' or 'sans-serif').
-      const fn = d.fontsNormalized as any;
-      let targetLabel = '';
-      if (fn && typeof fn === 'object') {
-        targetLabel = fn.to || fn.normalizedTo || fn.targetFont || fn.font || fn.family || '';
-        if (targetLabel) targetLabel = ` to ${targetLabel}`;
-      }
-      out.push({
-        type: 'fixed',
-        message:
-          typeof fn === 'object' && fn.replaced
-            ? `${fn.replaced} font run(s) were normalized${targetLabel || ' to a sans-serif font'}.`
-            : `Fonts were normalized${targetLabel || ' to a sans-serif font'} for better accessibility.`,
-      });
-    }
+    // Font types are now flagged for user action, not auto-fixed
     
     if (d.fontSizesNormalized) {
       out.push({
@@ -405,15 +481,195 @@ export class DashboardComponent {
     const minFontMsgFlat = this.getMinFontSizeMessage(d);
     if (minFontMsgFlat) out.push({ type: 'fixed', message: minFontMsgFlat.includes('adjusted') ? minFontMsgFlat.replace('adjusted to min font size', 'enforced to') : minFontMsgFlat.replace('Minimum font size enforced', 'Minimum font size enforced to') });
     
-    // Line spacing fixes
-    if (d.lineSpacingFixed) {
-      let lineSpacingMessage = 'Line spacing has been adjusted to at least 1.5 for improved readability.';
-      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
-        lineSpacingMessage = `Line spacing was adjusted for ${d.lineSpacingFixed.adjustedParagraphs} paragraph(s) to meet the minimum 1.5 requirement for readability.`;
+    // Inline content positioning fixes
+    if (d.inlineContentFixed && d.inlineContentCount) {
+      let message = d.inlineContentExplanation || 'Inline content positioning fixed for better accessibility.';
+      
+      if (d.inlineContentCount > 1) {
+        message = `${d.inlineContentCount} inline content positioning issues fixed. ${d.inlineContentExplanation || 'In-line content is necessary for users who rely on assistive technology and preferred by all users.'}`;
       }
+      
+      // Add category information if available
+      if (d.inlineContentCategory) {
+        message += ` (${d.inlineContentCategory})`;
+      }
+      
+      // If detailed information is available, include it
+      if (Array.isArray(d.inlineContentDetails) && d.inlineContentDetails.length > 0) {
+        message += `\n\n📊 Details - Click to expand`;
+        
+        const detailsList = d.inlineContentDetails.map((item, index) => {
+          let detail = `${index + 1}. ${item.description || 'Positioning fix applied'}`;
+          if (item.type) detail += ` (${item.type})`;
+          if (item.originalContent && typeof item.originalContent === 'string' && !item.originalContent.includes('<')) {
+            detail += `\n   Original: "${item.originalContent.substring(0, 60)}..."`;
+          }
+          return detail;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-green-600 dark:text-green-400 hover:underline">View ${d.inlineContentDetails.length} Fix Detail${d.inlineContentDetails.length > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${detailsList}</div>\n</details>`;
+      }
+      
       out.push({
         type: 'fixed',
-        message: lineSpacingMessage,
+        message: message,
+      });
+    }
+    
+    // Line spacing and font type are now flagged for user action
+    if (d.lineSpacingNeedsFixing) {
+      let message = 'Line spacing needs to be at least 1.5 for improved readability (flagged for your attention).';
+      
+      // If detailed location information is available, include it
+      if (d.lineSpacingLocations && d.lineSpacingLocations.length > 0) {
+        const count = d.lineSpacingLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
+        
+        const locationDetails = d.lineSpacingLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.currentSpacing) location += ` • Current: ${item.currentSpacing}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Line Spacing Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
+      }
+      
+      out.push({
+        type: 'flagged',
+        message: message,
+      });
+    }
+    
+    if (d.fontTypeNeedsFixing) {
+      out.push({
+        type: 'flagged',
+        message: 'Font types should be Arial/sans-serif for better accessibility (flagged for your attention).',
+      });
+    }
+    
+    if (d.fontSizeNeedsFixing) {
+      let message = 'Font sizes should be consistent and appropriately sized (flagged for your attention).';
+      
+      // If detailed location information is available, include it
+      if (d.fontSizeLocations && d.fontSizeLocations.length > 0) {
+        const count = d.fontSizeLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
+        
+        const locationDetails = d.fontSizeLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.size) location += ` • Current: ${item.size}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Font Size Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
+      }
+      
+      out.push({
+        type: 'flagged',
+        message: message,
+      });
+    }
+    
+    if (d.linkNamesNeedImprovement) {
+      let message = 'Link names are not descriptive (flagged for your attention).';
+      
+      // If detailed location information is available, include it
+      if (d.linkLocations && d.linkLocations.length > 0) {
+        // Remove duplicates based on location and linkText
+        const uniqueLocations = d.linkLocations.filter((item, index, self) =>
+          index === self.findIndex(t => t.location === item.location && t.linkText === item.linkText)
+        );
+        
+        const count = uniqueLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
+        
+        const locationDetails = uniqueLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.type) location += ` • Type: ${item.type}`;
+          if (item.linkText) location += ` • Current text: "${item.linkText}"`;
+          if (item.recommendation) location += ` • Recommendation: ${item.recommendation}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Link Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
+      }
+      
+      out.push({
+        type: 'flagged',
+        message: message,
+      });
+    }
+    
+    if (d.formsDetected) {
+      let message = 'Forms detected (flagged for your attention).';
+      
+      // If detailed location information is available, include it
+      if (d.formLocations && d.formLocations.length > 0) {
+        const count = d.formLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
+        
+        const locationDetails = d.formLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.type) location += ` • Type: ${item.type}`;
+          if (item.recommendation) location += ` • Recommendation: ${item.recommendation}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Form Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
+      }
+      
+      out.push({
+        type: 'flagged',
+        message: message,
+      });
+    }
+    
+    if (d.flashingObjectsDetected) {
+      let message = 'Flashing objects detected (flagged for your attention).';
+      
+      // If detailed location information is available, include it
+      if (d.flashingObjectLocations && d.flashingObjectLocations.length > 0) {
+        const count = d.flashingObjectLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
+        
+        const locationDetails = d.flashingObjectLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.type) location += ` • Type: ${item.type}`;
+          if (item.recommendation) location += ` • Recommendation: ${item.recommendation}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Flashing Object Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
+      }
+      
+      out.push({
+        type: 'flagged',
+        message: message,
       });
     }
     
@@ -485,14 +741,34 @@ export class DashboardComponent {
         message: `The header/footer contains content. Consider duplicating key information within the document body for better accessibility.`,
       });
 
-    if (
-      typeof d.imagesMissingOrBadAlt === 'number' &&
-      d.imagesMissingOrBadAlt > 0
-    )
+    if (d.imagesMissingOrBadAlt && (typeof d.imagesMissingOrBadAlt === 'number' && d.imagesMissingOrBadAlt > 0)) {
+      let message = `${d.imagesMissingOrBadAlt} image(s) are missing or have poor alt text. Alt text should describe the content and purpose of the image for accessibility.`;
+      
+      // If detailed location information is available, include it
+      if (d.imageLocations && d.imageLocations.length > 0) {
+        const count = d.imageLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
+        
+        const locationDetails = d.imageLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.imagePath) location += ` • File: ${item.imagePath}`;
+          if (item.altText) location += ` • Current alt: "${item.altText}"`;
+          if (item.preview && item.preview !== 'No surrounding text') {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} Image Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
+      }
+      
       out.push({
         type: 'flagged',
-        message: `${d.imagesMissingOrBadAlt} image(s) are missing or have poor alt text. Alt text should describe the content and purpose of the image for accessibility.`,
+        message: message,
       });
+    }
 
     if (
       typeof d.anchoredDrawingsDetected === 'number' &&
@@ -509,11 +785,35 @@ export class DashboardComponent {
         message: `${d.embeddedMedia.length} embedded media item(s) detected. Ensure captions or transcripts are provided for accessibility.`,
       });
 
-    if (d.gifsDetected?.length)
+    if (d.gifsDetected?.length) {
+      let message = `${d.gifsDetected.length} GIF(s) detected. Verify that none of them contain flashing content, which can cause accessibility issues.`;
+      
+      // If detailed location information is available, include it
+      if (d.gifLocations && d.gifLocations.length > 0) {
+        const count = d.gifLocations.length;
+        message += `\n\n📍 ${count} location${count > 1 ? 's' : ''} found - Click to expand details`;
+        
+        const locationDetails = d.gifLocations.map((item, index) => {
+          let location = `${index + 1}. ${item.location}`;
+          if (item.approximatePage) location += ` (Page ${item.approximatePage})`;
+          if (item.context && item.context !== 'Document body') location += ` • ${item.context}`;
+          if (item.type) location += ` • Type: ${item.type}`;
+          if (item.filePath) location += ` • File: ${item.filePath}`;
+          if (item.recommendation) location += ` • Recommendation: ${item.recommendation}`;
+          if (item.preview && !item.preview.includes('<w:')) {
+            location += `\n   Preview: "${item.preview.substring(0, 80)}..."`;
+          }
+          return location;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View ${count} GIF Issue${count > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${locationDetails}</div>\n</details>`;
+      }
+      
       out.push({
         type: 'flagged',
-        message: `${d.gifsDetected.length} GIF(s) detected. Verify that none of them contain flashing content, which can cause accessibility issues.`,
+        message: message,
       });
+    }
 
     if (d.colorContrastIssues?.length)
       out.push({
@@ -682,31 +982,33 @@ export class DashboardComponent {
   // New backend auto-fixes
   const tsCount = this.getTextShadowsCount(d);
   if (tsCount > 0) count += tsCount;
-    // Prefer fontSizesNormalized when present, otherwise count fontsNormalized.
+    // Only count font size normalization (not font type or line spacing - those are now flagged)
     if (d.fontSizesNormalized) {
       if (typeof d.fontSizesNormalized === 'object' && (d.fontSizesNormalized as any).adjustedRuns)
         count += (d.fontSizesNormalized as any).adjustedRuns;
       else count++;
-    } else if (d.fontsNormalized) {
-      if (typeof d.fontsNormalized === 'object' && d.fontsNormalized.replaced)
-        count += d.fontsNormalized.replaced;
-      else count++;
     }
+    
     if (d.minFontSizeEnforced) {
       if (typeof d.minFontSizeEnforced === 'object' && d.minFontSizeEnforced.adjustedRuns)
         count += d.minFontSizeEnforced.adjustedRuns;
       else count++;
     }
     
-    // Line spacing fixes
-    if (d.lineSpacingFixed) {
-      if (typeof d.lineSpacingFixed === 'object' && d.lineSpacingFixed.adjustedParagraphs) {
-        count += d.lineSpacingFixed.adjustedParagraphs;
-      } else {
-        count++;
-      }
-    }
+    // Note: Line spacing and font types are now flagged for user action, not auto-fixed
     
     return count;
+  }
+
+  // Count actual flagged issues as displayed to the user (forms count as 1 regardless of locations)
+  getFlaggedCount(): number {
+    if (!this.issues) return 0;
+    return this.issues.filter(issue => issue.type === 'flagged').length;
+  }
+
+  // Count actual fixed issues as displayed to the user
+  getFixedCount(): number {
+    if (!this.issues) return 0;
+    return this.issues.filter(issue => issue.type === 'fixed').length;
   }
 }
