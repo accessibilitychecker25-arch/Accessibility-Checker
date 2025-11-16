@@ -507,7 +507,7 @@ export class DashboardComponent {
           return detail;
         }).join('\n\n');
         
-        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-green-600 dark:text-green-400 hover:underline">View ${d.inlineContentDetails.length} Fix Detail${d.inlineContentDetails.length > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${detailsList}</div>\n</details>`;
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-green-500 dark:text-green-400 hover:underline">View ${d.inlineContentDetails.length} Fix Detail${d.inlineContentDetails.length > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${detailsList}</div>\n</details>`;
       }
       
       out.push({
