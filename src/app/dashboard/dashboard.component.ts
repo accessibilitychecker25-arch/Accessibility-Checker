@@ -49,6 +49,10 @@ interface DocxRemediationResponse {
       linkNamesNeedImprovement?: boolean;
       formsDetected?: boolean;
       flashingObjectsDetected?: boolean;
+      inlineContentFixed?: boolean;
+      inlineContentCount?: number;
+      inlineContentExplanation?: string;
+      inlineContentCategory?: string;
       // Location details are provided in separate arrays
       lineSpacingLocations?: Array<{
         type: string;
@@ -150,6 +154,13 @@ interface DocxRemediationResponse {
         preview: string;
         recommendation: string;
         filePath?: string;
+      }>;
+      // Inline content positioning details
+      inlineContentDetails?: Array<{
+        type: string;
+        description: string;
+        originalContent?: string;
+        fixedContent?: string;
       }>;
       colorContrastIssues?: Array<{
         paragraphIndex: number;
@@ -469,6 +480,41 @@ export class DashboardComponent {
 
     const minFontMsgFlat = this.getMinFontSizeMessage(d);
     if (minFontMsgFlat) out.push({ type: 'fixed', message: minFontMsgFlat.includes('adjusted') ? minFontMsgFlat.replace('adjusted to min font size', 'enforced to') : minFontMsgFlat.replace('Minimum font size enforced', 'Minimum font size enforced to') });
+    
+    // Inline content positioning fixes
+    if (d.inlineContentFixed && d.inlineContentCount) {
+      let message = d.inlineContentExplanation || 'Inline content positioning fixed for better accessibility.';
+      
+      if (d.inlineContentCount > 1) {
+        message = `${d.inlineContentCount} inline content positioning issues fixed. ${d.inlineContentExplanation || 'In-line content is necessary for users who rely on assistive technology and preferred by all users.'}`;
+      }
+      
+      // Add category information if available
+      if (d.inlineContentCategory) {
+        message += ` (${d.inlineContentCategory})`;
+      }
+      
+      // If detailed information is available, include it
+      if (Array.isArray(d.inlineContentDetails) && d.inlineContentDetails.length > 0) {
+        message += `\n\n📊 Details - Click to expand`;
+        
+        const detailsList = d.inlineContentDetails.map((item, index) => {
+          let detail = `${index + 1}. ${item.description || 'Positioning fix applied'}`;
+          if (item.type) detail += ` (${item.type})`;
+          if (item.originalContent && typeof item.originalContent === 'string' && !item.originalContent.includes('<')) {
+            detail += `\n   Original: "${item.originalContent.substring(0, 60)}..."`;
+          }
+          return detail;
+        }).join('\n\n');
+        
+        message += `\n\n<details class="mt-2">\n<summary class="cursor-pointer text-sm font-medium text-green-600 dark:text-green-400 hover:underline">View ${d.inlineContentDetails.length} Fix Detail${d.inlineContentDetails.length > 1 ? 's' : ''}</summary>\n<div class="mt-2 pl-4 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">${detailsList}</div>\n</details>`;
+      }
+      
+      out.push({
+        type: 'fixed',
+        message: message,
+      });
+    }
     
     // Line spacing and font type are now flagged for user action
     if (d.lineSpacingNeedsFixing) {
