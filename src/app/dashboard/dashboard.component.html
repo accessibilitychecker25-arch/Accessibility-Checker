@@ -60,7 +60,7 @@
       </h3>
 
       <div class="flex space-x-4 mb-4">
-        <span class="text-green-500 dark:text-green-400 font-medium">
+        <span class="text-green-600 dark:text-green-400 font-medium">
           Fixed: {{ getFixedCount() }}
         </span>
         <span class="self-center text-sm text-gray-700 dark:text-gray-300">(client-estimated auto-fixes: {{ countAutoFixableIssues() }})</span>
@@ -126,7 +126,7 @@
       <ul *ngIf="issues.length; else noIssues">
         <li *ngFor="let i of issues" class="mb-4">
           <div
-            [class]="i.type === 'fixed' ? 'text-green-500 dark:text-green-400' : i.type === 'flagged' ? 'text-yellow-500 dark:text-yellow-400' : ''"
+            [class]="i.type === 'fixed' ? 'text-green-600 dark:text-green-400' : i.type === 'flagged' ? 'text-yellow-500 dark:text-yellow-400' : ''"
           >
             <span class="mr-2">•</span>
             <span [innerHTML]="i.message"></span>
