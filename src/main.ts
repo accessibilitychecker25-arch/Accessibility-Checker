@@ -10,13 +10,13 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBhW7HnnVFVO-4XFaJLk8mR7ymbxWhkTH4',
-  authDomain: 'senior-design-accessibility.web.app',
-  projectId: 'senior-design-accessibility',
-  storageBucket: 'senior-design-accessibility.firebasestorage.app',
-  messagingSenderId: '521462721828',
-  appId: '1:521462721828:web:2f4295b2658db5903b17b1',
-  measurementId: 'G-XE1DW7D98T',
+  apiKey: "AIzaSyAuj6XLcgQduNnv547xplFh7M4dWlq1pQc",
+  authDomain: "accessibility-checker-3cdd0.firebaseapp.com",
+  projectId: "accessibility-checker-3cdd0",
+  storageBucket: "accessibility-checker-3cdd0.firebasestorage.app",
+  messagingSenderId: "948822095350",
+  appId: "1:948822095350:web:25c55da2cffd2d33c083d7",
+  measurementId: "G-7PJ1GWP2LY"
 };
 
 bootstrapApplication(AppComponent, {
